@@ -1,6 +1,7 @@
 model: "openai/gpt-4o-mini"
 dataset_path: "data/dataset.json"
 scorer: "exact_match"
+adapter: "mmlu"
 output_dir: "results"
 seed: 42
 log_level: "info"

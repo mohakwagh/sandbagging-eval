@@ -8,6 +8,7 @@ class PipelineConfig(BaseModel):
     model: str
     dataset_path: str
     scorer: Literal["exact_match", "llm_judge"]
+    adapter: str = "mmlu"
     output_dir: str
     seed: int
     log_level: Literal["debug", "info", "warning", "error"] = "info"
