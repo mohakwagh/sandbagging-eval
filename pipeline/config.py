@@ -29,8 +29,8 @@ class PipelineConfig(BaseModel):
         return v
 
 
-def load_config(config_path: str) -> PipelineConfig:
-    load_dotenv()
+def load_config(config_path: str, dotenv_path: str = None) -> PipelineConfig:
+    load_dotenv(dotenv_path=dotenv_path)
     with open(config_path, "r") as f:
         raw = yaml.safe_load(f)
     return PipelineConfig(**raw)

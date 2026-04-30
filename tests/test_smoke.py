@@ -76,6 +76,28 @@ def test_dataset_adapter_interface():
     assert issubclass(MMLUAdapter, DatasetAdapter)
 
 
+def test_dotenv_loading(tmp_path, monkeypatch):
+    import os
+    from pipeline.config import load_config
+
+    env_file = tmp_path / ".env"
+    env_file.write_text("SANDBAGGING_TEST_KEY=test-value-xyz\n")
+
+    cfg_file = tmp_path / "config.yaml"
+    cfg_file.write_text(
+        "model: openai/gpt-4o-mini\n"
+        "dataset_path: data/dataset.json\n"
+        "scorer: exact_match\n"
+        "output_dir: results\n"
+        "seed: 42\n"
+    )
+
+    monkeypatch.delenv("SANDBAGGING_TEST_KEY", raising=False)
+    config = load_config(str(cfg_file), dotenv_path=str(env_file))
+    assert os.environ.get("SANDBAGGING_TEST_KEY") == "test-value-xyz"
+    assert config.seed == 42
+
+
 def test_scorer_interface():
     from pipeline.scorers.base import BaseScorer
     from pipeline.scorers.exact_match import ExactMatchScorer

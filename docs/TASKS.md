@@ -7,16 +7,16 @@ Track implementation progress here. Mark items complete as work is done. Do not 
 ## Phase 0: Project Scaffolding
 **Goal:** Bare repo with working infrastructure — nothing runs yet but everything is wired up.
 
-- [ ] Initialize repo and `.gitignore` (exclude `.env`, `results/`, `__pycache__`)
-- [ ] Create `requirements.txt` with all dependencies
-- [ ] Create `Dockerfile` and `docker-compose.yaml`
-- [ ] Create `.env.example` with required key names and no values
-- [ ] Create `config.yaml` with default pipeline parameters
-- [ ] Implement `pipeline/config.py` — Pydantic config schema with fast-fail validation
-- [ ] Verify `.env` loads correctly via `python-dotenv`
-- [ ] Scaffold empty modules with stubs for all interfaces
-- [ ] Set up `pytest` with a passing smoke test
-- [ ] Verify Docker container builds and runs without errors
+- [x] Initialize repo and `.gitignore` (exclude `.env`, `results/`, `__pycache__`)
+- [x] Create `requirements.txt` with all dependencies
+- [x] Create `Dockerfile` and `docker-compose.yaml`
+- [x] Create `.env.example` with required key names and no values
+- [x] Create `config.yaml` with default pipeline parameters
+- [x] Implement `pipeline/config.py` — Pydantic config schema with fast-fail validation
+- [x] Verify `.env` loads correctly via `python-dotenv`
+- [x] Scaffold empty modules with stubs for all interfaces
+- [x] Set up `pytest` with a passing smoke test (8/8 passing)
+- [ ] Verify Docker container builds and runs without errors *(Docker not installed in dev environment — Dockerfile and docker-compose.yaml are present and structurally valid; verify manually when Docker is available)*
 
 **Phase 0 complete when:** `pytest tests/` passes, Docker builds cleanly, config loads and validates correctly.
 
