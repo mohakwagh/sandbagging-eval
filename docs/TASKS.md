@@ -25,27 +25,27 @@ Track implementation progress here. Mark items complete as work is done. Do not 
 ## Phase 1: Offline Dataset Builder
 **Goal:** Offline module that produces a standardized, versioned dataset file ready for pipeline consumption.
 
-- [ ] Define `DatasetItem` schema in `dataset_builder/schema.py`
-- [ ] Define `PromptInstance` schema
-- [ ] Implement `DatasetAdapter` base interface in `dataset_builder/adapters/base.py`
-- [ ] Implement `MMLUAdapter` in `dataset_builder/adapters/mmlu.py`
-  - [ ] Source from correct MMLU subsets per category
-  - [ ] Sample 50 questions per category (150 total) with fixed seed
-  - [ ] Fold options into question text
-- [ ] Implement prompt variant generator in `dataset_builder/prompt_variants.py`
-  - [ ] Neutral templates (2-3 variants)
-  - [ ] Subtle templates (2-3 variants)
-  - [ ] Explicit templates (2-3 variants)
-  - [ ] Rotation logic across questions
-- [ ] Export dataset to JSON and CSV
-- [ ] Write `dataset_builder/build.py` entry point
+- [x] Define `DatasetItem` schema in `dataset_builder/schema.py`
+- [x] Define `PromptInstance` schema
+- [x] Implement `DatasetAdapter` base interface in `dataset_builder/adapters/base.py`
+- [x] Implement `MMLUAdapter` in `dataset_builder/adapters/mmlu.py`
+  - [x] Source from correct MMLU subsets per category
+  - [x] Sample 50 questions per category (150 total) with fixed seed
+  - [x] Fold options into question text
+- [x] Implement prompt variant generator in `dataset_builder/prompt_variants.py`
+  - [x] Neutral templates (2-3 variants)
+  - [x] Subtle templates (2-3 variants)
+  - [x] Explicit templates (2-3 variants)
+  - [x] Rotation logic across questions
+- [x] Export dataset to JSON and CSV
+- [x] Write `dataset_builder/build.py` entry point
 
 **Tests:**
-- [ ] Adapter interface contract — MMLUAdapter implements all required methods
-- [ ] Sampling reproducibility — same seed produces same 150 questions
-- [ ] Prompt variant output structure — all three conditions present per question
-- [ ] Schema validation — all exported items conform to `DatasetItem` schema
-- [ ] Export — JSON and CSV files are valid and contain expected number of rows (450)
+- [x] Adapter interface contract — MMLUAdapter implements all required methods
+- [x] Sampling reproducibility — same seed produces same 150 questions
+- [x] Prompt variant output structure — all three conditions present per question
+- [x] Schema validation — all exported items conform to `DatasetItem` schema
+- [x] Export — JSON and CSV files are valid and contain expected number of rows (450)
 
 **Phase 1 complete when:** `python -m dataset_builder.build --config config.yaml` produces a valid 450-row dataset file and all Phase 1 tests pass.
 
