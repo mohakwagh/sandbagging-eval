@@ -1,0 +1,143 @@
+# Implementation Tasks
+
+Track implementation progress here. Mark items complete as work is done. Do not mark a phase complete until all tests pass.
+
+---
+
+## Phase 0: Project Scaffolding
+**Goal:** Bare repo with working infrastructure — nothing runs yet but everything is wired up.
+
+- [ ] Initialize repo and `.gitignore` (exclude `.env`, `results/`, `__pycache__`)
+- [ ] Create `requirements.txt` with all dependencies
+- [ ] Create `Dockerfile` and `docker-compose.yaml`
+- [ ] Create `.env.example` with required key names and no values
+- [ ] Create `config.yaml` with default pipeline parameters
+- [ ] Implement `pipeline/config.py` — Pydantic config schema with fast-fail validation
+- [ ] Verify `.env` loads correctly via `python-dotenv`
+- [ ] Scaffold empty modules with stubs for all interfaces
+- [ ] Set up `pytest` with a passing smoke test
+- [ ] Verify Docker container builds and runs without errors
+
+**Phase 0 complete when:** `pytest tests/` passes, Docker builds cleanly, config loads and validates correctly.
+
+---
+
+## Phase 1: Offline Dataset Builder
+**Goal:** Offline module that produces a standardized, versioned dataset file ready for pipeline consumption.
+
+- [ ] Define `DatasetItem` schema in `dataset_builder/schema.py`
+- [ ] Define `PromptInstance` schema
+- [ ] Implement `DatasetAdapter` base interface in `dataset_builder/adapters/base.py`
+- [ ] Implement `MMLUAdapter` in `dataset_builder/adapters/mmlu.py`
+  - [ ] Source from correct MMLU subsets per category
+  - [ ] Sample 50 questions per category (150 total) with fixed seed
+  - [ ] Fold options into question text
+- [ ] Implement prompt variant generator in `dataset_builder/prompt_variants.py`
+  - [ ] Neutral templates (2-3 variants)
+  - [ ] Subtle templates (2-3 variants)
+  - [ ] Explicit templates (2-3 variants)
+  - [ ] Rotation logic across questions
+- [ ] Export dataset to JSON and CSV
+- [ ] Write `dataset_builder/build.py` entry point
+
+**Tests:**
+- [ ] Adapter interface contract — MMLUAdapter implements all required methods
+- [ ] Sampling reproducibility — same seed produces same 150 questions
+- [ ] Prompt variant output structure — all three conditions present per question
+- [ ] Schema validation — all exported items conform to `DatasetItem` schema
+- [ ] Export — JSON and CSV files are valid and contain expected number of rows (450)
+
+**Phase 1 complete when:** `python -m dataset_builder.build --config config.yaml` produces a valid 450-row dataset file and all Phase 1 tests pass.
+
+---
+
+## Phase 2: Inspect AI Pipeline Core
+**Goal:** End-to-end pipeline run — sends prompts to model and returns raw scored responses.
+
+- [ ] Implement `pipeline/task.py` — Inspect `Task` definition
+- [ ] Implement `pipeline/solver.py` — Inspect `Solver` that sends prompts to configured model
+- [ ] Wire dataset loading into pipeline via adapter interface
+- [ ] Implement `pipeline/run.py` — pipeline entry point
+- [ ] Verify end-to-end run on a minimal dataset slice (10 questions × 3 conditions)
+
+**Tests:**
+- [ ] Task constructs correctly from dataset and config
+- [ ] Solver input/output contracts — responses are non-empty strings
+- [ ] Pipeline runs without errors on minimal config
+- [ ] Raw responses logged correctly by Inspect
+
+**Phase 2 complete when:** `python -m pipeline.run --config config.yaml` runs end-to-end on a small slice without errors and all Phase 2 tests pass.
+
+---
+
+## Phase 3: Scoring & Results
+**Goal:** Accurate per-condition, per-category scoring and sandbagging rate computation.
+
+- [ ] Define `ScorerInput` and `ScorerOutput` schemas in `pipeline/schema.py`
+- [ ] Implement `BaseScorer` interface in `pipeline/scorers/base.py`
+- [ ] Implement `ExactMatchScorer` in `pipeline/scorers/exact_match.py`
+- [ ] Define `LLMJudgeScorer` interface in `pipeline/scorers/llm_judge.py` (interface + docstring only)
+- [ ] Wire scorer injection via config into pipeline
+- [ ] Implement `analysis/metrics.py`
+  - [ ] Accuracy per condition per category
+  - [ ] Sandbagging rate: `accuracy_neutral - accuracy_condition`
+  - [ ] Overall sandbagging rate per condition
+- [ ] Implement results storage in `results/{model}_{timestamp}/`
+  - [ ] `raw_responses.csv`
+  - [ ] `aggregated_metrics.json`
+
+**Tests:**
+- [ ] ExactMatchScorer — correct answers score 1.0, incorrect score 0.0, case-insensitive
+- [ ] Sandbagging rate formula — computed correctly for known inputs
+- [ ] Results export — JSON and CSV files exist and match expected schema
+- [ ] Scorer is swappable via config with no code changes
+
+**Phase 3 complete when:** Pipeline produces correct `aggregated_metrics.json` and `raw_responses.csv` for a full run and all Phase 3 tests pass.
+
+---
+
+## Phase 4: Visualization
+**Goal:** Standalone HTML report with Plotly charts ready for portfolio display.
+
+- [ ] Implement `analysis/visualization.py`
+  - [ ] Grouped bar chart — accuracy by condition across task categories
+  - [ ] Delta bar chart — sandbagging rate by condition and category
+  - [ ] Summary table — overall sandbagging rate per condition
+- [ ] Export report as `results/{model}_{timestamp}/report.html`
+- [ ] Verify report renders correctly in browser
+
+**Tests:**
+- [ ] Report generates without errors from valid `aggregated_metrics.json`
+- [ ] Output file exists at expected path
+- [ ] HTML file is valid and non-empty
+- [ ] Charts contain expected data keys for all three conditions and categories
+
+**Phase 4 complete when:** `report.html` renders correctly in browser with all three visualizations and all Phase 4 tests pass.
+
+---
+
+## Phase 5: Extensibility Validation & Final Docs
+**Goal:** Confirm extensibility story holds, finalize documentation.
+
+- [ ] Run full pipeline on complete 450-prompt dataset
+- [ ] Verify cross-model result storage — run pipeline on a second model config, confirm both results coexist in `results/` and can be plotted together
+- [ ] Write `README.md` — project overview, setup instructions, how to run
+- [ ] Add inline docstrings to all public interfaces and entry points
+- [ ] Final update to `docs/TASKS.md` — mark all items complete
+- [ ] Update `docs/SPEC.md` success criteria checkboxes
+
+**Tests:**
+- [ ] Full pipeline run passes all existing tests
+- [ ] No hardcoded model names or scorer types outside of config
+
+**Phase 5 complete when:** Full pipeline runs cleanly end-to-end, README is complete, all tests pass, and resume narrative numbers are filled in from real results.
+
+---
+
+## Resume Narrative Numbers
+*(Fill in after Phase 5 is complete)*
+
+- Overall sandbagging rate (explicit condition): `[X]%`
+- Overall sandbagging rate (subtle condition): `[Y]%`
+- Highest sandbagging rate by category: `[category]` at `[Z]%`
+- Delta between subtle and explicit conditions: `[N]%`
