@@ -1,13 +1,51 @@
 """Pipeline entry point for sandbagging detection evaluation."""
 
 import argparse
+import csv
 import json
+import os
+from datetime import datetime
 
 from inspect_ai import eval as inspect_eval
+from inspect_ai.scorer import CORRECT
 
+from analysis.metrics import compute_metrics
 from dataset_builder.schema import PromptInstance
 from pipeline.config import load_config
 from pipeline.task import build_task
+
+
+def _extract_records(eval_results) -> list[dict]:
+    records = []
+    for sample in eval_results[0].samples:
+        score_value = list(sample.scores.values())[0].value
+        records.append({
+            "item_id": sample.id,
+            "category": sample.metadata["category"],
+            "condition": sample.metadata["condition"],
+            "prompt": sample.input,
+            "response": sample.output.completion,
+            "expected": sample.target if isinstance(sample.target, str) else sample.target[0],
+            "score": 1.0 if score_value == CORRECT else 0.0,
+        })
+    return records
+
+
+def _save_results(records: list[dict], config, run_dir: str):
+    os.makedirs(run_dir, exist_ok=True)
+
+    csv_path = os.path.join(run_dir, "raw_responses.csv")
+    with open(csv_path, "w", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=records[0].keys())
+        writer.writeheader()
+        writer.writerows(records)
+
+    metrics = compute_metrics(records)
+    metrics_path = os.path.join(run_dir, "aggregated_metrics.json")
+    with open(metrics_path, "w") as f:
+        json.dump(metrics, f, indent=2)
+
+    return metrics_path, csv_path
 
 
 def main():
@@ -27,7 +65,7 @@ def main():
 
     task = build_task(instances, config)
 
-    results = inspect_eval(
+    eval_results = inspect_eval(
         task,
         model=config.model,
         log_dir=config.output_dir,
@@ -35,7 +73,18 @@ def main():
         display="none",
     )
 
-    return results
+    records = _extract_records(eval_results)
+
+    model_slug = config.model.replace("/", "_")
+    timestamp = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
+    run_dir = os.path.join(config.output_dir, f"{model_slug}_{timestamp}")
+    metrics_path, csv_path = _save_results(records, config, run_dir)
+
+    print(f"Results saved to {run_dir}")
+    print(f"  raw_responses.csv : {csv_path}")
+    print(f"  aggregated_metrics.json : {metrics_path}")
+
+    return eval_results
 
 
 if __name__ == "__main__":
