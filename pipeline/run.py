@@ -103,10 +103,13 @@ def main():
     # --- Stage 4: Run evaluation (model API calls via Inspect) ---
     print(f"[4/5] Running evaluation — sending prompts to {config.model}...")
     print("      This may take a few minutes depending on dataset size.")
+    # Inspect writes its native .eval logs to a dedicated subdirectory to keep
+    # them separate from the structured pipeline outputs in results/{model}_{timestamp}/
+    inspect_log_dir = os.path.join(config.output_dir, "inspect_logs")
     eval_results = inspect_eval(
         task,
         model=config.model,
-        log_dir=config.output_dir,
+        log_dir=inspect_log_dir,
         log_level=config.log_level,
         display="none",
     )
