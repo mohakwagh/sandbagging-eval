@@ -21,6 +21,13 @@ SCORER_REGISTRY: dict[str, type[BaseScorer]] = {
 
 
 def _make_inspect_scorer(custom_scorer: BaseScorer):
+    """
+    Bridge a BaseScorer into Inspect's native scorer interface.
+
+    Wraps any BaseScorer so it can be passed directly to an Inspect Task.
+    Uses mean() as the metric so it handles both binary (0.0/1.0) and
+    continuous (0.0–1.0) score values without modification.
+    """
     @inspect_scorer(metrics=[mean()])
     def _scorer():
         async def score(state: TaskState, target: Target) -> Score:
@@ -33,6 +40,14 @@ def _make_inspect_scorer(custom_scorer: BaseScorer):
 
 
 def build_task(instances: List[PromptInstance], config: PipelineConfig) -> Task:
+    """
+    Build an Inspect Task from a list of PromptInstances and a pipeline config.
+
+    Converts each PromptInstance to an Inspect Sample, storing category and
+    condition in sample metadata so they are available for sandbagging rate
+    computation after the eval run. The scorer is selected from SCORER_REGISTRY
+    via config.scorer — swapping scorers requires only a config change.
+    """
     scorer_cls = SCORER_REGISTRY.get(config.scorer)
     if scorer_cls is None:
         raise ValueError(

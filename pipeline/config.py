@@ -5,6 +5,11 @@ from dotenv import load_dotenv
 
 
 class PipelineConfig(BaseModel):
+    """
+    Validated configuration for a pipeline run. Loaded from config.yaml at
+    startup — fails fast on missing or invalid parameters. API keys and secrets
+    are loaded separately from .env via python-dotenv and are never stored here.
+    """
     model: str
     dataset_path: str
     scorer: Literal["exact_match", "llm_judge"]
@@ -31,6 +36,7 @@ class PipelineConfig(BaseModel):
 
 
 def load_config(config_path: str, dotenv_path: str = None) -> PipelineConfig:
+    """Load and validate pipeline config from a YAML file, and load .env secrets."""
     load_dotenv(dotenv_path=dotenv_path)
     with open(config_path, "r") as f:
         raw = yaml.safe_load(f)

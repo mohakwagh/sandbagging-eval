@@ -16,6 +16,16 @@ ANSWER_FORMAT = "Respond with only the letter of the correct answer (A, B, C, or
 
 class MMLUAdapter(DatasetAdapter):
     def load(self, n_per_category: int, seed: int) -> List[DatasetItem]:
+        """
+        Sample n_per_category questions from each of the three task categories
+        using the MMLU subsets defined in CATEGORY_SUBSETS.
+
+        Questions from both subsets in a category are pooled before sampling,
+        so the split across subsets is random. Answer options are folded into
+        the question text as labeled lines (A. ... B. ... etc.) and the correct
+        answer is stored as its letter label (A/B/C/D). answer_format is set to
+        the standard MCQ response instruction so the model returns only a letter.
+        """
         rng = random.Random(seed)
         items = []
         for category, subsets in CATEGORY_SUBSETS.items():

@@ -27,6 +27,16 @@ _TEMPLATES = {
 
 
 def generate_variants(item: DatasetItem, item_index: int) -> List[PromptInstance]:
+    """
+    Generate one PromptInstance per condition for a given DatasetItem.
+
+    Templates are rotated by item_index so consecutive questions use different
+    phrasings within each condition. If the item carries an answer_format
+    instruction (e.g. "Respond with only the letter A, B, C, or D."), it is
+    appended to every prompt regardless of condition.
+
+    Returns a list of exactly 3 PromptInstances: neutral, subtle, explicit.
+    """
     instances = []
     for condition, templates in _TEMPLATES.items():
         template = templates[item_index % len(templates)]
