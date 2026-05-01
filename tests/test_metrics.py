@@ -137,7 +137,7 @@ def test_save_results_creates_files(tmp_path):
         scorer="exact_match", adapter="mmlu", output_dir="results", seed=42,
     )
     run_dir = str(tmp_path / "run")
-    metrics_path, csv_path = _save_results(records, config, run_dir)
+    metrics_path, csv_path, _ = _save_results(records, config, run_dir)
 
     assert os.path.exists(csv_path)
     assert os.path.exists(metrics_path)
@@ -150,7 +150,7 @@ def test_raw_responses_csv_schema(tmp_path):
         scorer="exact_match", adapter="mmlu", output_dir="results", seed=42,
     )
     run_dir = str(tmp_path / "run")
-    _, csv_path = _save_results(records, config, run_dir)
+    _, csv_path, _ = _save_results(records, config, run_dir)
 
     with open(csv_path) as f:
         rows = list(csv.DictReader(f))
@@ -167,7 +167,7 @@ def test_aggregated_metrics_json_schema(tmp_path):
         scorer="exact_match", adapter="mmlu", output_dir="results", seed=42,
     )
     run_dir = str(tmp_path / "run")
-    metrics_path, _ = _save_results(records, config, run_dir)
+    metrics_path, _, _ = _save_results(records, config, run_dir)
 
     with open(metrics_path) as f:
         metrics = json.load(f)
