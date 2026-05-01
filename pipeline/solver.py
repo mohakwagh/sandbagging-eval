@@ -1,5 +1,6 @@
-"""Inspect Solver — implemented in Phase 2."""
+from inspect_ai.solver import generate, Solver
+from pipeline.config import PipelineConfig
 
 
-def build_solver(config):
-    raise NotImplementedError("Phase 2: solver not yet implemented")
+def build_solver(config: PipelineConfig) -> Solver:
+    return generate()
