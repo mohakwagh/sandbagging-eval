@@ -8,6 +8,7 @@ class DatasetItem(BaseModel):
     category: str
     source: str
     options: Optional[List[str]] = None
+    answer_format: Optional[str] = None  # adapter-specific response format instruction
 
 
 class PromptInstance(BaseModel):

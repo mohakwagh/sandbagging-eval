@@ -11,6 +11,7 @@ CATEGORY_SUBSETS = {
 }
 
 ANSWER_LABELS = ["A", "B", "C", "D"]
+ANSWER_FORMAT = "Respond with only the letter of the correct answer (A, B, C, or D)."
 
 
 class MMLUAdapter(DatasetAdapter):
@@ -34,6 +35,7 @@ class MMLUAdapter(DatasetAdapter):
                         category=category,
                         source=f"mmlu:{subset}",
                         options=choices,
+                        answer_format=ANSWER_FORMAT,
                     ))
             sampled = rng.sample(pool, min(n_per_category, len(pool)))
             items.extend(sampled)

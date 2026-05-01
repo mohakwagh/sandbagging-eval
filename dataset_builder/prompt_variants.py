@@ -31,6 +31,8 @@ def generate_variants(item: DatasetItem, item_index: int) -> List[PromptInstance
     for condition, templates in _TEMPLATES.items():
         template = templates[item_index % len(templates)]
         prompt = template.format(question=item.question)
+        if item.answer_format:
+            prompt = f"{prompt}\n\n{item.answer_format}"
         instances.append(PromptInstance(
             item_id=f"{item.source}_{item_index}_{condition}",
             question=item.question,
