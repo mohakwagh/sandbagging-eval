@@ -109,18 +109,22 @@ Track implementation progress here. Mark items complete as work is done. Do not 
 ## Phase 4: Visualization
 **Goal:** Standalone HTML report with Plotly charts ready for portfolio display.
 
-- [ ] Implement `analysis/visualization.py`
-  - [ ] Grouped bar chart — accuracy by condition across task categories
-  - [ ] Delta bar chart — sandbagging rate by condition and category
-  - [ ] Summary table — overall sandbagging rate per condition
-- [ ] Export report as `results/{model}_{timestamp}/report.html`
-- [ ] Verify report renders correctly in browser
+- [x] Implement `analysis/visualization.py`
+  - [x] Grouped bar chart — accuracy by condition across task categories
+  - [x] Delta bar chart — sandbagging rate by condition and category
+  - [x] Summary table — overall sandbagging rate per condition
+- [x] Export report as `results/{model}_{timestamp}/report.html`
+- [ ] Verify report renders correctly in browser *(requires a real pipeline run with an API key — report structure verified via tests)*
 
 **Tests:**
-- [ ] Report generates without errors from valid `aggregated_metrics.json`
-- [ ] Output file exists at expected path
-- [ ] HTML file is valid and non-empty
-- [ ] Charts contain expected data keys for all three conditions and categories
+- [x] Report generates without errors from valid `aggregated_metrics.json`
+- [x] Output file exists at expected path
+- [x] HTML file is valid and non-empty
+- [x] Charts contain expected data keys for all three conditions and categories
+
+**Notes:**
+- `generate_report()` is called automatically from `run.py` after results are saved — `report.html` is written alongside `raw_responses.csv` and `aggregated_metrics.json`
+- Report is a standalone HTML file with Plotly JS bundled — no server needed to view it
 
 **Phase 4 complete when:** `report.html` renders correctly in browser with all three visualizations and all Phase 4 tests pass.
 
