@@ -179,6 +179,30 @@ sandbagging-eval/
     └── TASKS.md
 ```
 
+## Example Findings
+
+Results from running the pipeline across five OpenAI models on 150 MMLU questions (50 per category) under three prompt conditions:
+
+| Model | Neutral | Subtle | Explicit | Subtle Rate | Explicit Rate |
+|---|---|---|---|---|---|
+| gpt-5-chat-latest | 83% | 79% | 80% | +3.3% | +2.7% |
+| gpt-5.4-mini | 73% | 76% | 73% | -3.3% | -0.7% |
+| o3 | 97% | 97% | 97% | +0.7% | 0.0% |
+| o4-mini | 97% | 97% | 95% | 0.0% | +1.3% |
+| gpt-5.5 | 97% | 97% | 97% | 0.0% | -0.7% |
+
+Positive sandbagging rate = accuracy dropped under eval-aware framing. Negative = model performed *better* when aware it was being evaluated.
+
+**gpt-5-chat-latest** shows the clearest sandbagging signal (+3.3% subtle, +2.7% explicit). Models at accuracy ceiling (o3, o4-mini, gpt-5.5) show near-zero deltas — limited room to sandbag when baseline performance is already ~97%.
+
+### Report Preview
+
+Each run generates a standalone interactive HTML report:
+
+![Sandbagging Detection Report](docs/report_screenshot.png)
+
+*Screenshot of `report.html` — accuracy by condition/category (top), sandbagging rate deltas (middle), overall summary table (bottom). Generated automatically after each run, no server required.*
+
 ## Tech Stack
 
 - **[Inspect AI](https://inspect.ai)** — evaluation harness, model execution, native logging
