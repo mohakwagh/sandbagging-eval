@@ -7,8 +7,6 @@ import os
 from datetime import datetime
 
 from inspect_ai import eval as inspect_eval
-from inspect_ai.scorer import CORRECT
-
 from analysis.metrics import compute_metrics
 from dataset_builder.schema import PromptInstance
 from pipeline.config import load_config
@@ -26,7 +24,7 @@ def _extract_records(eval_results) -> list[dict]:
             "prompt": sample.input,
             "response": sample.output.completion,
             "expected": sample.target if isinstance(sample.target, str) else sample.target[0],
-            "score": 1.0 if score_value == CORRECT else 0.0,
+            "score": float(score_value),
         })
     return records
 

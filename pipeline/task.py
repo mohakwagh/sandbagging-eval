@@ -2,7 +2,7 @@ from typing import List
 
 from inspect_ai import Task
 from inspect_ai.dataset import MemoryDataset, Sample
-from inspect_ai.scorer import CORRECT, INCORRECT, Score, Target, accuracy
+from inspect_ai.scorer import Score, Target, mean
 from inspect_ai.scorer import scorer as inspect_scorer
 from inspect_ai.solver import TaskState
 
@@ -21,16 +21,13 @@ SCORER_REGISTRY: dict[str, type[BaseScorer]] = {
 
 
 def _make_inspect_scorer(custom_scorer: BaseScorer):
-    @inspect_scorer(metrics=[accuracy()])
+    @inspect_scorer(metrics=[mean()])
     def _scorer():
         async def score(state: TaskState, target: Target) -> Score:
             result = custom_scorer.score(
                 ScorerInput(response=state.output.completion, expected=target.text)
             )
-            return Score(
-                value=CORRECT if result.score == 1.0 else INCORRECT,
-                answer=state.output.completion,
-            )
+            return Score(value=result.score, answer=state.output.completion)
         return score
     return _scorer()
 
