@@ -54,17 +54,22 @@ Track implementation progress here. Mark items complete as work is done. Do not 
 ## Phase 2: Inspect AI Pipeline Core
 **Goal:** End-to-end pipeline run — sends prompts to model and returns raw scored responses.
 
-- [ ] Implement `pipeline/task.py` — Inspect `Task` definition
-- [ ] Implement `pipeline/solver.py` — Inspect `Solver` that sends prompts to configured model
-- [ ] Wire dataset loading into pipeline via adapter interface
-- [ ] Implement `pipeline/run.py` — pipeline entry point
-- [ ] Verify end-to-end run on a minimal dataset slice (10 questions × 3 conditions)
+- [x] Implement `pipeline/task.py` — Inspect `Task` definition
+- [x] Implement `pipeline/solver.py` — Inspect `Solver` that sends prompts to configured model
+- [x] Wire dataset loading into pipeline via adapter interface
+- [x] Implement `pipeline/run.py` — pipeline entry point
+- [x] Verify end-to-end run on a minimal dataset slice (10 questions × 3 conditions)
 
 **Tests:**
-- [ ] Task constructs correctly from dataset and config
-- [ ] Solver input/output contracts — responses are non-empty strings
-- [ ] Pipeline runs without errors on minimal config
-- [ ] Raw responses logged correctly by Inspect
+- [x] Task constructs correctly from dataset and config
+- [x] Solver input/output contracts — responses are non-empty strings
+- [x] Pipeline runs without errors on minimal config
+- [x] Raw responses logged correctly by Inspect
+
+**Notes:**
+- Inspect AI lazily loads log files from disk — tests use pytest `tmp_path` fixture (not `tempfile.TemporaryDirectory`) to ensure the log file persists while samples are accessed
+- `answer("letter")` scorer used as placeholder in Phase 2; replaced by `ExactMatchScorer` in Phase 3
+- `--limit` flag on `pipeline/run.py` enables quick sliced runs (e.g. `--limit 30` = 10 questions × 3 conditions)
 
 **Phase 2 complete when:** `python -m pipeline.run --config config.yaml` runs end-to-end on a small slice without errors and all Phase 2 tests pass.
 
