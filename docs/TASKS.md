@@ -78,24 +78,29 @@ Track implementation progress here. Mark items complete as work is done. Do not 
 ## Phase 3: Scoring & Results
 **Goal:** Accurate per-condition, per-category scoring and sandbagging rate computation.
 
-- [ ] Define `ScorerInput` and `ScorerOutput` schemas in `pipeline/schema.py`
-- [ ] Implement `BaseScorer` interface in `pipeline/scorers/base.py`
-- [ ] Implement `ExactMatchScorer` in `pipeline/scorers/exact_match.py`
-- [ ] Define `LLMJudgeScorer` interface in `pipeline/scorers/llm_judge.py` (interface + docstring only)
-- [ ] Wire scorer injection via config into pipeline
-- [ ] Implement `analysis/metrics.py`
-  - [ ] Accuracy per condition per category
-  - [ ] Sandbagging rate: `accuracy_neutral - accuracy_condition`
-  - [ ] Overall sandbagging rate per condition
-- [ ] Implement results storage in `results/{model}_{timestamp}/`
-  - [ ] `raw_responses.csv`
-  - [ ] `aggregated_metrics.json`
+- [x] Define `ScorerInput` and `ScorerOutput` schemas in `pipeline/schema.py`
+- [x] Implement `BaseScorer` interface in `pipeline/scorers/base.py`
+- [x] Implement `ExactMatchScorer` in `pipeline/scorers/exact_match.py`
+- [x] Define `LLMJudgeScorer` interface in `pipeline/scorers/llm_judge.py` (interface + docstring only)
+- [x] Wire scorer injection via config into pipeline
+- [x] Implement `analysis/metrics.py`
+  - [x] Accuracy per condition per category
+  - [x] Sandbagging rate: `accuracy_neutral - accuracy_condition`
+  - [x] Overall sandbagging rate per condition
+- [x] Implement results storage in `results/{model}_{timestamp}/`
+  - [x] `raw_responses.csv`
+  - [x] `aggregated_metrics.json`
 
 **Tests:**
-- [ ] ExactMatchScorer — correct answers score 1.0, incorrect score 0.0, case-insensitive
-- [ ] Sandbagging rate formula — computed correctly for known inputs
-- [ ] Results export — JSON and CSV files exist and match expected schema
-- [ ] Scorer is swappable via config with no code changes
+- [x] ExactMatchScorer — correct answers score 1.0, incorrect score 0.0, case-insensitive
+- [x] Sandbagging rate formula — computed correctly for known inputs
+- [x] Results export — JSON and CSV files exist and match expected schema
+- [x] Scorer is swappable via config with no code changes
+
+**Notes:**
+- `SCORER_REGISTRY` in `pipeline/task.py` maps config scorer names to classes — adding a new scorer requires one registry entry and no other code changes
+- `_make_inspect_scorer()` bridges our `BaseScorer` interface to Inspect's native scorer mechanism
+- Sandbagging rate can be negative (model performs better under eval framing) — this is a valid and meaningful result
 
 **Phase 3 complete when:** Pipeline produces correct `aggregated_metrics.json` and `raw_responses.csv` for a full run and all Phase 3 tests pass.
 
