@@ -8,6 +8,7 @@ from datetime import datetime
 
 from inspect_ai import eval as inspect_eval
 from analysis.metrics import compute_metrics
+from analysis.visualization import generate_report
 from dataset_builder.schema import PromptInstance
 from pipeline.config import load_config
 from pipeline.task import build_task
@@ -43,7 +44,10 @@ def _save_results(records: list[dict], config, run_dir: str):
     with open(metrics_path, "w") as f:
         json.dump(metrics, f, indent=2)
 
-    return metrics_path, csv_path
+    report_path = os.path.join(run_dir, "report.html")
+    generate_report(metrics, report_path)
+
+    return metrics_path, csv_path, report_path
 
 
 def main():
@@ -76,11 +80,12 @@ def main():
     model_slug = config.model.replace("/", "_")
     timestamp = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
     run_dir = os.path.join(config.output_dir, f"{model_slug}_{timestamp}")
-    metrics_path, csv_path = _save_results(records, config, run_dir)
+    metrics_path, csv_path, report_path = _save_results(records, config, run_dir)
 
     print(f"Results saved to {run_dir}")
-    print(f"  raw_responses.csv : {csv_path}")
+    print(f"  raw_responses.csv       : {csv_path}")
     print(f"  aggregated_metrics.json : {metrics_path}")
+    print(f"  report.html             : {report_path}")
 
     return eval_results
 
