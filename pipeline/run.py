@@ -4,6 +4,7 @@ import argparse
 import csv
 import json
 import os
+import webbrowser
 from datetime import datetime
 
 from inspect_ai import eval as inspect_eval
@@ -54,6 +55,7 @@ def main():
     parser = argparse.ArgumentParser(description="Run sandbagging detection pipeline")
     parser.add_argument("--config", required=True, help="Path to config.yaml")
     parser.add_argument("--limit", type=int, default=None, help="Limit samples (for testing)")
+    parser.add_argument("--open", action="store_true", help="Open report.html in browser after run")
     args = parser.parse_args()
 
     config = load_config(args.config)
@@ -86,6 +88,9 @@ def main():
     print(f"  raw_responses.csv       : {csv_path}")
     print(f"  aggregated_metrics.json : {metrics_path}")
     print(f"  report.html             : {report_path}")
+
+    if args.open:
+        webbrowser.open(f"file://{os.path.abspath(report_path)}")
 
     return eval_results
 
