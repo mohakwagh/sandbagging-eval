@@ -212,13 +212,21 @@ Positive sandbagging rate = accuracy dropped under eval-aware framing. Negative 
 
 **gpt-5-chat-latest** shows the clearest sandbagging signal (+3.3% subtle, +2.7% explicit). Models at accuracy ceiling (o3, o4-mini, gpt-5.5) show near-zero deltas — limited room to sandbag when baseline performance is already ~97%.
 
-### Report Preview
+### Per-Run Report
 
 Each run generates a standalone interactive HTML report:
 
 ![Sandbagging Detection Report](docs/example_report_screenshot.png)
 
 _Screenshot of `report.html` — accuracy by condition/category (top), sandbagging rate deltas (middle), overall summary table (bottom). Generated automatically after each run, no server required._
+
+### Cross-Model Comparison Report
+
+After running multiple models, generate a side-by-side comparison across all models for a given dataset:
+
+![Cross-Model Comparison Report](docs/example_comparison_screenshot.png)
+
+_Screenshot of `comparison_mmlu.html` — overall accuracy by model (top), overall sandbagging rate by model (middle), per-category sandbagging rate broken out by subtle and explicit conditions (bottom)._
 
 ## Tech Stack
 
