@@ -45,6 +45,7 @@ def _save_results(records: list[dict], config, run_dir: str):
     Persist all run outputs to results/{model}_{timestamp}/:
       - raw_responses.csv       one row per prompt instance
       - aggregated_metrics.json accuracy + sandbagging rates per condition/category
+      - run_config.json         adapter, model, seed — used by analysis.compare to filter runs by dataset
       - report.html             standalone Plotly visualization
     """
     os.makedirs(run_dir, exist_ok=True)
@@ -61,6 +62,16 @@ def _save_results(records: list[dict], config, run_dir: str):
     metrics_path = os.path.join(run_dir, "aggregated_metrics.json")
     with open(metrics_path, "w") as f:
         json.dump(metrics, f, indent=2)
+
+    # Run config — lets analysis.compare filter runs by adapter/dataset
+    run_config_path = os.path.join(run_dir, "run_config.json")
+    with open(run_config_path, "w") as f:
+        json.dump({
+            "model": config.model,
+            "adapter": config.adapter,
+            "seed": config.seed,
+            "dataset_path": config.dataset_path,
+        }, f, indent=2)
 
     # HTML report — standalone Plotly visualization, no server required
     report_path = os.path.join(run_dir, "report.html")
