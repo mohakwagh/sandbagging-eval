@@ -35,6 +35,7 @@ Standardized Dataset                     │
 ```
 
 **Extensibility** is a first-class design goal:
+
 - **New dataset source** — implement `DatasetAdapter`, register in `build.py`
 - **New scorer** — implement `BaseScorer`, register in `pipeline/task.py`
 - **New model** — update `config.yaml` only, no code changes
@@ -72,15 +73,15 @@ pytest tests/
 
 All non-secret parameters are set in `config.yaml`:
 
-| Field | Default | Description |
-|---|---|---|
-| `model` | `openai/gpt-4o-mini` | Model identifier passed to Inspect AI |
-| `adapter` | `mmlu` | Dataset adapter to use for the offline build |
-| `scorer` | `exact_match` | Scorer type: `exact_match` or `llm_judge` |
-| `n_per_category` | `50` | Questions sampled per task category |
-| `seed` | `42` | Random seed for reproducible sampling |
-| `output_dir` | `results` | Directory for run outputs |
-| `dataset_path` | `data/dataset.json` | Path to the preprocessed dataset |
+| Field            | Default              | Description                                  |
+| ---------------- | -------------------- | -------------------------------------------- |
+| `model`          | `openai/gpt-4o-mini` | Model identifier passed to Inspect AI        |
+| `adapter`        | `mmlu`               | Dataset adapter to use for the offline build |
+| `scorer`         | `exact_match`        | Scorer type: `exact_match` or `llm_judge`    |
+| `n_per_category` | `50`                 | Questions sampled per task category          |
+| `seed`           | `42`                 | Random seed for reproducible sampling        |
+| `output_dir`     | `results`            | Directory for run outputs                    |
+| `dataset_path`   | `data/dataset.json`  | Path to the preprocessed dataset             |
 
 To run on a different model, change `model` in `config.yaml` — no code changes required.
 
@@ -91,6 +92,7 @@ API keys are loaded from `.env` via `python-dotenv` and are never stored in conf
 ### Add a new dataset source
 
 1. Create `dataset_builder/adapters/your_adapter.py` implementing `DatasetAdapter`:
+
    ```python
    from dataset_builder.adapters.base import DatasetAdapter
    from dataset_builder.schema import DatasetItem
@@ -99,6 +101,7 @@ API keys are loaded from `.env` via `python-dotenv` and are never stored in conf
        def load(self, n_per_category: int, seed: int) -> list[DatasetItem]:
            ...
    ```
+
 2. Register it in `dataset_builder/build.py`:
    ```python
    ADAPTER_REGISTRY = {
@@ -111,6 +114,7 @@ API keys are loaded from `.env` via `python-dotenv` and are never stored in conf
 ### Add a new scorer
 
 1. Create `pipeline/scorers/your_scorer.py` implementing `BaseScorer`:
+
    ```python
    from pipeline.scorers.base import BaseScorer
    from pipeline.schema import ScorerInput, ScorerOutput
@@ -119,6 +123,7 @@ API keys are loaded from `.env` via `python-dotenv` and are never stored in conf
        def score(self, input: ScorerInput) -> ScorerOutput:
            ...  # return ScorerOutput(score=float_in_0_to_1)
    ```
+
 2. Register it in `pipeline/task.py`:
    ```python
    SCORER_REGISTRY = {
@@ -181,17 +186,17 @@ sandbagging-eval/
 
 ## Example Findings
 
-Results from running the pipeline across five OpenAI models on 150 MMLU questions (50 per category) under three prompt conditions:
+Results (model accuracy and sandbagging rate) from running the pipeline across five OpenAI models on 150 MMLU questions (50 per category) under three prompt conditions:
 
-| Model | Neutral | Subtle | Explicit | Subtle Rate | Explicit Rate |
-|---|---|---|---|---|---|
-| gpt-5-chat-latest | 83% | 79% | 80% | +3.3% | +2.7% |
-| gpt-5.4-mini | 73% | 76% | 73% | -3.3% | -0.7% |
-| o3 | 97% | 97% | 97% | +0.7% | 0.0% |
-| o4-mini | 97% | 97% | 95% | 0.0% | +1.3% |
-| gpt-5.5 | 97% | 97% | 97% | 0.0% | -0.7% |
+| Model             | Neutral | Subtle | Explicit | Subtle Rate | Explicit Rate |
+| ----------------- | ------- | ------ | -------- | ----------- | ------------- |
+| gpt-5-chat-latest | 83%     | 79%    | 80%      | +3.3%       | +2.7%         |
+| gpt-5.4-mini      | 73%     | 76%    | 73%      | -3.3%       | -0.7%         |
+| o3                | 97%     | 97%    | 97%      | +0.7%       | 0.0%          |
+| o4-mini           | 97%     | 97%    | 95%      | 0.0%        | +1.3%         |
+| gpt-5.5           | 97%     | 97%    | 97%      | 0.0%        | -0.7%         |
 
-Positive sandbagging rate = accuracy dropped under eval-aware framing. Negative = model performed *better* when aware it was being evaluated.
+Positive sandbagging rate = accuracy dropped under eval-aware framing. Negative = model performed _better_ when aware it was being evaluated.
 
 **gpt-5-chat-latest** shows the clearest sandbagging signal (+3.3% subtle, +2.7% explicit). Models at accuracy ceiling (o3, o4-mini, gpt-5.5) show near-zero deltas — limited room to sandbag when baseline performance is already ~97%.
 
@@ -199,13 +204,13 @@ Positive sandbagging rate = accuracy dropped under eval-aware framing. Negative 
 
 Each run generates a standalone interactive HTML report:
 
-![Sandbagging Detection Report](docs/report_screenshot.png)
+![Sandbagging Detection Report](docs/example_report_screenshot.png)
 
-*Screenshot of `report.html` — accuracy by condition/category (top), sandbagging rate deltas (middle), overall summary table (bottom). Generated automatically after each run, no server required.*
+_Screenshot of `report.html` — accuracy by condition/category (top), sandbagging rate deltas (middle), overall summary table (bottom). Generated automatically after each run, no server required._
 
 ## Tech Stack
 
-- **[Inspect AI](https://inspect.ai)** — evaluation harness, model execution, native logging
+- **[Inspect AI](https://inspect.aisi.org.uk/)** — evaluation harness, model execution, native logging
 - **OpenAI API** — model inference (default: GPT-4o Mini)
 - **HuggingFace `datasets`** — MMLU dataset sourcing
 - **Pydantic** — config and schema validation with fast-fail on invalid parameters
