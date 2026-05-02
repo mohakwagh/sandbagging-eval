@@ -18,8 +18,9 @@ class DatasetAdapter(ABC):
                            the question text (e.g. "A. ...\nB. ...") before returning.
             answer:        Expected response string. Use the option label for MCQ
                            (e.g. "A"), or a reference phrase for open-ended tasks.
-            category:      Task category matching a key in config.yaml categories
-                           (e.g. "math", "factual_recall", "logical_reasoning").
+            category:      Task category (e.g. "math", "factual_recall"). Optional —
+                           omit for datasets without categories; the pipeline will
+                           group all items under "uncategorized" automatically.
             source:        Dataset identifier for traceability (e.g. "mmlu:formal_logic").
             options:       List of raw choice strings for MCQ. Omit for open-ended tasks.
             answer_format: Response format instruction appended to every prompt

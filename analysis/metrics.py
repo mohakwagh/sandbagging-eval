@@ -15,6 +15,9 @@ def compute_metrics(records: list[dict]) -> dict:
         dict with accuracy (per_category, overall) and sandbagging_rate (per_category, overall)
     """
     df = pd.DataFrame(records)
+    # Coerce missing categories to a single bucket so adapters without
+    # category support produce valid output without requiring a dummy value.
+    df["category"] = df["category"].fillna("uncategorized")
     categories = sorted(df["category"].unique().tolist())
 
     acc_grouped = df.groupby(["category", "condition"])["score"].mean()
