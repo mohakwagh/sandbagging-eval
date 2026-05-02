@@ -41,36 +41,36 @@ Build a pluggable sandbagging detection pipeline using Inspect AI that measures 
 ## 4. Success Criteria / Definition of Done
 
 ### Pipeline
-- [ ] Pipeline runs end-to-end on a configured model and task set without manual intervention
-- [ ] All three prompt conditions (neutral, subtle, explicit) are executed and results stored per question
-- [ ] Results are reproducible — fixed random seed for dataset sampling, config logged per run
+- [x] Pipeline runs end-to-end on a configured model and task set without manual intervention
+- [x] All three prompt conditions (neutral, subtle, explicit) are executed and results stored per question
+- [x] Results are reproducible — fixed random seed for dataset sampling, config logged per run
 
 ### Dataset
-- [ ] 150 questions sourced from MMLU, evenly distributed across three task categories (50 per category)
-- [ ] Each question has three prompt variants — 450 total prompt instances minimum
-- [ ] Dataset constructed offline and exported to standardized JSON/CSV format before pipeline execution
-- [ ] Dataset adapter interface implemented — new datasets can be plugged in without changes to pipeline logic
+- [x] 150 questions sourced from MMLU, evenly distributed across three task categories (50 per category)
+- [x] Each question has three prompt variants — 450 total prompt instances minimum
+- [x] Dataset constructed offline and exported to standardized JSON/CSV format before pipeline execution
+- [x] Dataset adapter interface implemented — new datasets can be plugged in without changes to pipeline logic
 
 ### Scoring
-- [ ] Scoring is configurable via scorer interface
-- [ ] ExactMatchScorer implemented and used by default for MMLU multiple choice
-- [ ] LLMJudgeScorer interface defined and documented for open-ended task extension
-- [ ] Accuracy computed per condition (neutral, subtle, explicit) and per task category
+- [x] Scoring is configurable via scorer interface
+- [x] ExactMatchScorer implemented and used by default for MMLU multiple choice
+- [x] LLMJudgeScorer interface defined and documented for open-ended task extension
+- [x] Accuracy computed per condition (neutral, subtle, explicit) and per task category
 
 ### Detection
-- [ ] Sandbagging rate metric computed as accuracy drop between neutral and evaluation-aware conditions, per category and per condition
-- [ ] A measurable performance delta observed between neutral and at least one evaluation-aware condition
+- [x] Sandbagging rate metric computed as accuracy drop between neutral and evaluation-aware conditions, per category and per condition
+- [x] A measurable performance delta observed between neutral and at least one evaluation-aware condition
 
 ### Output
-- [ ] Visual report generated showing sandbagging rate by condition and by category
-- [ ] Per-model results stored in structured format (JSON or CSV) for cross-model plotting
+- [x] Visual report generated showing sandbagging rate by condition and by category
+- [x] Per-model results stored in structured format (JSON or CSV) for cross-model plotting
 
 ### Extensibility
-- [ ] Model selection is config-driven — swapping models requires no code changes
-- [ ] Adding a new task category requires no changes outside of dataset and config
-- [ ] Adding a new dataset source requires only a new adapter implementation
-- [ ] Adding a new scorer requires only a new scorer implementation
-- [ ] Scorer type is configurable — ExactMatchScorer used by default, LLMJudgeScorer interface available for open-ended task extensions
+- [x] Model selection is config-driven — swapping models requires no code changes
+- [x] Adding a new task category requires no changes outside of dataset and config
+- [x] Adding a new dataset source requires only a new adapter implementation
+- [x] Adding a new scorer requires only a new scorer implementation
+- [x] Scorer type is configurable — ExactMatchScorer used by default, LLMJudgeScorer interface available for open-ended task extensions
 
 ---
 
@@ -181,14 +181,11 @@ Report exported as standalone HTML file for portfolio display.
 
 ---
 
-## 7. Resume Narrative
-*(To be finalized after implementation — fill in real numbers from pipeline results)*
+## 7. Key Findings
 
-**Option A — methodology-led:**
-*"Engineered a pluggable LLM sandbagging detection pipeline using Inspect AI, measuring accuracy deltas across neutral, subtle, and explicit evaluation-aware prompt conditions to surface behavioral evidence of prompt-induced strategic underperformance."*
+From running the pipeline on gpt-5-chat-latest (MMLU, 150 questions × 3 conditions):
 
-**Option B — findings-led:**
-*"Detected sandbagging behavior in [X]% of evaluation-aware prompt conditions across math, factual recall, and logical reasoning tasks, with explicit evaluation framing producing [Y]% higher sandbagging rates than subtle cues."*
-
-**Option C — architecture-led:**
-*"Designed a dataset-agnostic evaluation framework with pluggable adapter and scorer interfaces, supporting both deterministic exact-match and LLM-as-judge scoring to enable sandbagging detection across arbitrary task types and datasets."*
+- Overall sandbagging rate (subtle condition): **3.34%**
+- Overall sandbagging rate (explicit condition): **2.67%**
+- Highest per-category sandbagging rate: **math at 8%** (both subtle and explicit)
+- Models at accuracy ceiling (o3, o4-mini, gpt-5.5 at ~97%) show near-zero deltas — limited room to sandbag when baseline performance is already high

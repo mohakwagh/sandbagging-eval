@@ -17,7 +17,7 @@ This separation ensures the pipeline is lean at runtime, datasets are versionabl
 
 ```
 [OFFLINE]
-HuggingFace MMLU
+Dataset Source (e.g. HuggingFace MMLU)
       │
       ▼
 DatasetAdapter.load()
@@ -41,19 +41,28 @@ DatasetAdapter.load() ──► PromptInstance[]
 Inspect Task (Dataset + Solver + Scorer)
       │
       ▼
-Model Execution (OpenAI API via Inspect)
+Model Execution (via Inspect AI)
       │
       ▼
 Scorer (ExactMatch / LLMJudge)
       │
       ▼
-Results Storage (JSON/CSV, keyed by model + timestamp)
+Results Storage (JSON/CSV/HTML, keyed by model + timestamp)
       │
       ▼
 Metrics Computation (sandbagging rate per condition/category)
       │
       ▼
-Plotly Visualization (HTML report)
+Plotly Visualization (per-run report.html)
+
+[COMPARISON — separate command]
+results/ directory
+      │
+      ▼
+analysis.compare (filtered by --dataset)
+      │
+      ▼
+Cross-model comparison_<dataset>.html
 ```
 
 ---
@@ -85,10 +94,10 @@ class DatasetAdapter(ABC):
 
 Implements `DatasetAdapter` for MMLU. Samples from the following subsets:
 - Math/arithmetic: `elementary_mathematics`, `high_school_mathematics`
-- Factual recall: `world_facts`, `miscellaneous`
+- Factual recall: `global_facts`, `miscellaneous`
 - Logical reasoning: `logical_fallacies`, `formal_logic`
 
-Folds multiple choice options into the question text at load time. Exports `answer` as the correct option label (A/B/C/D).
+Folds multiple choice options into the question text at load time. Exports `answer` as the correct option label (A/B/C/D). Sets `answer_format` to the standard MCQ response instruction so models return only a letter.
 
 ---
 
@@ -99,12 +108,23 @@ from pydantic import BaseModel
 from typing import List, Optional
 
 class DatasetItem(BaseModel):
-    question: str           # full question text, options folded in for MCQ
-    answer: str             # correct answer label or expected response
-    category: str           # math | factual_recall | logical_reasoning
-    source: str             # e.g. "mmlu:logical_fallacies"
+    question: str                        # full question text, options folded in for MCQ
+    answer: str                          # correct answer label or expected response
+    category: Optional[str] = None       # e.g. "math" | "factual_recall"; None → "uncategorized"
+    source: str                          # e.g. "mmlu:logical_fallacies"
     options: Optional[List[str]] = None  # present for MCQ, omitted for open-ended
+    answer_format: Optional[str] = None  # adapter-specific response format instruction
+
+class PromptInstance(BaseModel):
+    item_id: str
+    question: str
+    answer: str
+    category: Optional[str] = None
+    condition: str          # neutral | subtle | explicit
+    prompt: str             # fully rendered prompt including answer_format if set
 ```
+
+`category` is optional — datasets without categories omit it and the pipeline groups results under `"uncategorized"`. `answer_format` is set by the adapter (e.g. "Respond with only the letter A, B, C, or D.") and appended to every prompt variant for that item.
 
 ---
 
@@ -140,9 +160,11 @@ class PipelineConfig(BaseModel):
     model: str                          # e.g. "openai/gpt-4o-mini"
     dataset_path: str                   # path to preprocessed dataset JSON/CSV
     scorer: Literal["exact_match", "llm_judge"]
+    adapter: str = "mmlu"               # dataset adapter name, must be in ADAPTER_REGISTRY
     output_dir: str
     seed: int
     log_level: str = "info"
+    n_per_category: int = 50
 ```
 
 Loaded from `config.yaml` at startup. API keys loaded separately from `.env` via `python-dotenv`. Fails fast on missing or invalid parameters.
@@ -171,7 +193,9 @@ class BaseScorer(ABC):
 
 ### `pipeline/scorers/exact_match.py` — ExactMatchScorer
 
-Implements `BaseScorer`. Compares model response to expected answer label via exact string match (case-insensitive, stripped). Used by default for MMLU multiple choice.
+Implements `BaseScorer`. For single-character expected answers (e.g. MCQ labels A/B/C/D), checks only the first character of the response — so `"A."`, `"A. some text"`, and `"A"` all match expected `"A"`. For multi-character expected answers, requires full exact match after stripping and lowercasing. Used by default for MMLU multiple choice.
+
+The Inspect bridge in `pipeline/task.py` wraps any `BaseScorer` via `_make_inspect_scorer()`, using Plotly's `mean()` metric so both binary (0.0/1.0) and continuous (0.0–1.0) scores are handled correctly.
 
 ---
 
@@ -197,9 +221,9 @@ Returns a structured metrics object consumed by the visualization module.
 
 ---
 
-### `analysis/visualization.py` — Plotly Report Generator
+### `analysis/visualization.py` — Per-Run Plotly Report
 
-Generates three visualizations and exports a standalone HTML report:
+Generates three visualizations and exports a standalone HTML report per run:
 
 1. **Grouped bar chart** — accuracy by condition (neutral/subtle/explicit) grouped by task category
 2. **Delta bar chart** — sandbagging rate (accuracy drop) by condition and category
@@ -209,19 +233,38 @@ Output: `results/{model}_{timestamp}/report.html`
 
 ---
 
+### `analysis/compare.py` — Cross-Model Comparison Report
+
+Separate command that scans all run directories, filters by `--dataset` (adapter name), and generates a side-by-side comparison across models using the latest run per model.
+
+```bash
+python -m analysis.compare --results_dir results/ --dataset mmlu --open
+```
+
+Charts:
+1. Overall accuracy by model (neutral/subtle/explicit)
+2. Overall sandbagging rate by model (subtle/explicit)
+3. Per-category sandbagging rate, subtle condition (omitted if dataset has no categories)
+4. Per-category sandbagging rate, explicit condition (omitted if dataset has no categories)
+
+Output: `results/comparison_{dataset}.html`
+
+---
+
 ## Results Storage Schema
 
-Per-run results stored as JSON keyed by model name and timestamp:
+Per-run results stored keyed by model name and timestamp:
 
 ```
 results/
-└── gpt-4o-mini_2025-04-28T14:32:00/
-    ├── raw_responses.csv       # per-question responses and scores
-    ├── aggregated_metrics.json # sandbagging rates per condition/category
-    └── report.html             # Plotly visualization
+└── openai_gpt-4o-mini_2026-05-01T16-09-02/
+    ├── raw_responses.csv       # per-prompt responses, expected answers, scores
+    ├── aggregated_metrics.json # accuracy + sandbagging rates per condition/category
+    ├── run_config.json         # model, adapter, seed — used by analysis.compare
+    └── report.html             # standalone Plotly visualization
 ```
 
-This structure enables cross-model comparison by running the pipeline on different models and plotting their `aggregated_metrics.json` files together.
+`run_config.json` enables `analysis.compare` to filter runs by adapter/dataset without relying on directory name parsing.
 
 ---
 
@@ -229,7 +272,8 @@ This structure enables cross-model comparison by running the pipeline on differe
 
 | What to extend | What to implement | Where |
 |---|---|---|
-| New dataset source | `DatasetAdapter` subclass | `dataset_builder/adapters/` |
-| New scorer | `BaseScorer` subclass | `pipeline/scorers/` |
+| New dataset source | `DatasetAdapter` subclass + `ADAPTER_REGISTRY` entry | `dataset_builder/adapters/` + `build.py` |
+| New scorer | `BaseScorer` subclass + `SCORER_REGISTRY` entry | `pipeline/scorers/` + `pipeline/task.py` |
 | New model | Update `config.yaml` only | `config.yaml` |
 | New task category | New adapter + config entry | `dataset_builder/adapters/` + `config.yaml` |
+| Cross-model comparison | Run `analysis.compare` with `--dataset` flag | `analysis/compare.py` |

@@ -144,10 +144,21 @@ results/
 └── openai_gpt-4o-mini_2026-05-01T16-09-02/
     ├── raw_responses.csv        # per-prompt responses, expected answers, scores
     ├── aggregated_metrics.json  # accuracy + sandbagging rates per condition/category
+    ├── run_config.json          # adapter, model, seed — used by the compare command
     └── report.html              # standalone Plotly visualization
 ```
 
 `report.html` is a self-contained file — open it in any browser, no server required.
+
+### Cross-model comparison
+
+After running multiple models, generate a side-by-side comparison report filtered by dataset:
+
+```bash
+python -m analysis.compare --results_dir results/ --dataset mmlu --open
+```
+
+Produces `results/comparison_mmlu.html` with overall accuracy, overall sandbagging rate, and per-category sandbagging rate across all models that used the `mmlu` adapter. Only the latest run per model is included.
 
 ## Project Structure
 
@@ -176,8 +187,9 @@ sandbagging-eval/
 │   └── run.py                      # entry point: python -m pipeline.run
 ├── analysis/
 │   ├── metrics.py                  # sandbagging rate computation
-│   └── visualization.py            # Plotly HTML report generation
-├── tests/                          # 55 pytest tests across all modules
+│   ├── visualization.py            # per-run Plotly HTML report
+│   └── compare.py                  # cross-model comparison report
+├── tests/                          # 65 pytest tests across all modules
 └── docs/
     ├── SPEC.md
     ├── ARCHITECTURE.md
@@ -216,6 +228,6 @@ _Screenshot of `report.html` — accuracy by condition/category (top), sandbaggi
 - **Pydantic** — config and schema validation with fast-fail on invalid parameters
 - **Pandas** — results aggregation and metric computation
 - **Plotly** — interactive HTML report generation
-- **pytest** — test suite (55 tests)
+- **pytest** — test suite (65 tests)
 - **python-dotenv** — secrets management
 - **Docker** — containerized execution

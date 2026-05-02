@@ -133,25 +133,22 @@ Track implementation progress here. Mark items complete as work is done. Do not 
 ## Phase 5: Extensibility Validation & Final Docs
 **Goal:** Confirm extensibility story holds, finalize documentation.
 
-- [ ] Run full pipeline on complete 450-prompt dataset
-- [ ] Verify cross-model result storage — run pipeline on a second model config, confirm both results coexist in `results/` and can be plotted together
-- [ ] Write `README.md` — project overview, setup instructions, how to run
-- [ ] Add inline docstrings to all public interfaces and entry points
-- [ ] Final update to `docs/TASKS.md` — mark all items complete
-- [ ] Update `docs/SPEC.md` success criteria checkboxes
+- [x] Run full pipeline on complete 450-prompt dataset
+- [x] Verify cross-model result storage — ran pipeline on 5 models (o3, o4-mini, gpt-5-chat-latest, gpt-5.4-mini, gpt-5.5), all results coexist in `results/` and are compared via `analysis.compare`
+- [x] Write `README.md` — project overview, setup instructions, how to run
+- [x] Add inline docstrings to all public interfaces and entry points
+- [x] Final update to `docs/TASKS.md` — mark all items complete
+- [x] Update `docs/SPEC.md` success criteria checkboxes
 
 **Tests:**
-- [ ] Full pipeline run passes all existing tests
-- [ ] No hardcoded model names or scorer types outside of config
+- [x] Full pipeline run passes all existing tests (65/65)
+- [x] No hardcoded model names or scorer types outside of config
 
-**Phase 5 complete when:** Full pipeline runs cleanly end-to-end, README is complete, all tests pass, and resume narrative numbers are filled in from real results.
+**Notes:**
+- `ExactMatchScorer` extended to handle single-character MCQ responses (e.g. "A." or "A. text" → matches "A")
+- `category` made optional in `DatasetItem` and `PromptInstance`; `None` coerced to `"uncategorized"` in `metrics.py`
+- `analysis/compare.py` added for cross-model comparison, scoped per dataset via `--dataset` flag
+- `run_config.json` saved per run to support dataset-scoped filtering in compare command
+- MMLU `world_facts` subject does not exist; corrected to `global_facts`
 
----
-
-## Resume Narrative Numbers
-*(Fill in after Phase 5 is complete)*
-
-- Overall sandbagging rate (explicit condition): `[X]%`
-- Overall sandbagging rate (subtle condition): `[Y]%`
-- Highest sandbagging rate by category: `[category]` at `[Z]%`
-- Delta between subtle and explicit conditions: `[N]%`
+**Phase 5 complete when:** Full pipeline runs cleanly end-to-end, README is complete, and all tests pass.
