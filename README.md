@@ -144,7 +144,7 @@ results/
 └── openai_gpt-4o-mini_2026-05-01T16-09-02/
     ├── raw_responses.csv        # per-prompt responses, expected answers, scores
     ├── aggregated_metrics.json  # accuracy + sandbagging rates per condition/category
-    ├── run_config.json          # adapter, model, seed — used by the compare command
+    ├── run_config.json          # adapter, model, scorer, seed — used by the compare command
     └── report.html              # standalone Plotly visualization
 ```
 
@@ -152,13 +152,15 @@ results/
 
 ### Cross-model comparison
 
-After running multiple models, generate a side-by-side comparison report filtered by dataset:
+After running multiple models, generate a side-by-side comparison report filtered by dataset and scorer:
 
 ```bash
-python -m analysis.compare --results_dir results/ --dataset mmlu --open
+python -m analysis.compare --results_dir results/ --dataset mmlu --scorer exact_match --open
 ```
 
-Produces `results/comparison_mmlu.html` with overall accuracy, overall sandbagging rate, and per-category sandbagging rate across all models that used the `mmlu` adapter. Only the latest run per model is included.
+Produces `results/comparison_mmlu_exact_match.html` — the scorer is included in the filename so comparisons for different scorers never overwrite each other. Only the latest run per model is included.
+
+If runs for the same dataset were produced with different scorers and `--scorer` is omitted, the command exits with an error listing the scorers found and the commands needed to compare each group separately.
 
 ## Project Structure
 
@@ -189,7 +191,7 @@ sandbagging-eval/
 │   ├── metrics.py                  # sandbagging rate computation
 │   ├── visualization.py            # per-run Plotly HTML report
 │   └── compare.py                  # cross-model comparison report
-├── tests/                          # 65 pytest tests across all modules
+├── tests/                          # 69 pytest tests across all modules
 └── docs/
     ├── SPEC.md
     ├── ARCHITECTURE.md
@@ -226,7 +228,7 @@ After running multiple models, generate a side-by-side comparison across all mod
 
 ![Cross-Model Comparison Report](docs/example_comparison_screenshot.png)
 
-_Screenshot of `comparison_mmlu.html` — overall accuracy by model (top), overall sandbagging rate by model (middle), per-category sandbagging rate broken out by subtle and explicit conditions (bottom)._
+_Screenshot of `comparison_mmlu_exact_match.html` — overall accuracy by model (top), overall sandbagging rate by model (middle), per-category sandbagging rate broken out by subtle and explicit conditions (bottom)._
 
 ## Tech Stack
 
@@ -236,6 +238,6 @@ _Screenshot of `comparison_mmlu.html` — overall accuracy by model (top), overa
 - **Pydantic** — config and schema validation with fast-fail on invalid parameters
 - **Pandas** — results aggregation and metric computation
 - **Plotly** — interactive HTML report generation
-- **pytest** — test suite (65 tests)
+- **pytest** — test suite (69 tests)
 - **python-dotenv** — secrets management
 - **Docker** — containerized execution

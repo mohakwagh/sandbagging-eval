@@ -112,7 +112,7 @@ def load_runs(results_dir: str, dataset: str, scorer: str = None) -> list[dict]:
             raise SystemExit(1)
 
     runs = [
-        {"model": v["model"], "metrics": v["metrics"]}
+        {"model": v["model"], "metrics": v["metrics"], "scorer": v["scorer"]}
         for v in sorted(candidates.values(), key=lambda x: x["model"])
     ]
     return runs
@@ -259,7 +259,20 @@ def main():
 
     print(f"Found {len(runs)} model(s): {[r['model'] for r in runs]}")
 
-    output_path = os.path.join(args.results_dir, f"comparison_{args.dataset}.html")
+    # Include scorer in filename so runs with different scorers don't overwrite each other.
+    # Use the explicitly requested scorer if given; otherwise infer from runs.
+    effective_scorer = args.scorer
+    if not effective_scorer:
+        inferred = {r.get("scorer") for r in runs if r.get("scorer")}
+        if len(inferred) == 1:
+            effective_scorer = inferred.pop()
+
+    if effective_scorer:
+        filename = f"comparison_{args.dataset}_{effective_scorer}.html"
+    else:
+        filename = f"comparison_{args.dataset}.html"
+
+    output_path = os.path.join(args.results_dir, filename)
     generate_comparison_report(runs, output_path)
     print(f"Comparison report saved to {output_path}")
 

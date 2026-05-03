@@ -62,7 +62,7 @@ results/ directory
 analysis.compare (filtered by --dataset)
       │
       ▼
-Cross-model comparison_<dataset>.html
+Cross-model comparison_<dataset>_<scorer>.html
 ```
 
 ---
@@ -247,7 +247,7 @@ Charts:
 3. Per-category sandbagging rate, subtle condition (omitted if dataset has no categories)
 4. Per-category sandbagging rate, explicit condition (omitted if dataset has no categories)
 
-Output: `results/comparison_{dataset}.html`
+Output: `results/comparison_{dataset}_{scorer}.html`
 
 ---
 

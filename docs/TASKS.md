@@ -141,7 +141,7 @@ Track implementation progress here. Mark items complete as work is done. Do not 
 - [x] Update `docs/SPEC.md` success criteria checkboxes
 
 **Tests:**
-- [x] Full pipeline run passes all existing tests (65/65)
+- [x] Full pipeline run passes all existing tests (69/69)
 - [x] No hardcoded model names or scorer types outside of config
 
 **Notes:**
@@ -149,6 +149,7 @@ Track implementation progress here. Mark items complete as work is done. Do not 
 - `category` made optional in `DatasetItem` and `PromptInstance`; `None` coerced to `"uncategorized"` in `metrics.py`
 - `analysis/compare.py` added for cross-model comparison, scoped per dataset via `--dataset` flag
 - `run_config.json` saved per run to support dataset-scoped filtering in compare command
+- `run_config.json` includes `scorer` — compare command requires `--scorer` when runs for the same dataset used different scorers, and exits with an error listing available scorers if mixed scorers are detected without a filter
 - MMLU `world_facts` subject does not exist; corrected to `global_facts`
 
 **Phase 5 complete when:** Full pipeline runs cleanly end-to-end, README is complete, and all tests pass.

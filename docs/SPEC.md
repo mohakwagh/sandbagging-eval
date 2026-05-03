@@ -137,15 +137,15 @@ sandbagging_rate = accuracy_neutral - accuracy_condition
 Computed for subtle and explicit conditions separately, per category and overall.
 
 #### Stage 8: Results Storage
-Aggregated results exported to JSON and CSV per run, keyed by model name and timestamp. Enables cross-model plotting without code changes.
+Aggregated results exported to JSON and CSV per run, keyed by model name and timestamp. A `run_config.json` file is written alongside each run recording the model, adapter, scorer, and seed — enabling `analysis.compare` to filter runs by dataset and scorer for valid cross-model comparison.
 
 #### Stage 9: Visualization
-Plotly generates:
+Plotly generates per-run:
 - Grouped bar chart: accuracy by condition across task categories
 - Bar chart: sandbagging rate (delta) by condition and category
 - Summary table: overall sandbagging rate per condition
 
-Report exported as standalone HTML file for portfolio display.
+Report exported as standalone HTML file. A separate `analysis.compare` command generates a cross-model comparison report scoped by dataset and scorer.
 
 ---
 
