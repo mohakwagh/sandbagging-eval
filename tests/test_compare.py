@@ -24,13 +24,14 @@ def _sample_metrics(neutral=0.8, subtle=0.7, explicit=0.6, categories=None):
     }
 
 
-def _write_run(tmp_path, model_slug, timestamp, adapter, metrics):
+def _write_run(tmp_path, model_slug, timestamp, adapter, metrics, scorer="exact_match"):
     run_dir = tmp_path / f"{model_slug}_{timestamp}"
     run_dir.mkdir()
     (run_dir / "aggregated_metrics.json").write_text(json.dumps(metrics))
     (run_dir / "run_config.json").write_text(json.dumps({
         "model": f"openai/{model_slug}",
         "adapter": adapter,
+        "scorer": scorer,
         "seed": 42,
         "dataset_path": "data/dataset.json",
     }))
@@ -148,3 +149,40 @@ def test_per_category_omitted_for_uncategorized_dataset(tmp_path):
     generate_comparison_report(runs, output_path)
     content = open(output_path).read()
     assert "Per-Category" not in content
+
+
+# ---------------------------------------------------------------------------
+# load_runs: scorer filtering
+# ---------------------------------------------------------------------------
+
+def test_load_runs_filters_by_scorer(tmp_path):
+    _write_run(tmp_path, "gpt-a", "2026-05-01T10-00-00", "mmlu", _sample_metrics(), scorer="exact_match")
+    _write_run(tmp_path, "gpt-b", "2026-05-01T11-00-00", "mmlu", _sample_metrics(), scorer="llm_judge")
+
+    runs = load_runs(str(tmp_path), "mmlu", scorer="exact_match")
+    assert len(runs) == 1
+    assert "gpt-a" in runs[0]["model"]
+
+
+def test_load_runs_excludes_mismatched_scorer(tmp_path):
+    _write_run(tmp_path, "gpt-a", "2026-05-01T10-00-00", "mmlu", _sample_metrics(), scorer="llm_judge")
+
+    runs = load_runs(str(tmp_path), "mmlu", scorer="exact_match")
+    assert len(runs) == 0
+
+
+def test_load_runs_raises_on_mixed_scorers(tmp_path):
+    _write_run(tmp_path, "gpt-a", "2026-05-01T10-00-00", "mmlu", _sample_metrics(), scorer="exact_match")
+    _write_run(tmp_path, "gpt-b", "2026-05-01T11-00-00", "mmlu", _sample_metrics(), scorer="llm_judge")
+
+    import pytest
+    with pytest.raises(SystemExit):
+        load_runs(str(tmp_path), "mmlu")
+
+
+def test_load_runs_no_error_when_single_scorer(tmp_path):
+    _write_run(tmp_path, "gpt-a", "2026-05-01T10-00-00", "mmlu", _sample_metrics(), scorer="exact_match")
+    _write_run(tmp_path, "gpt-b", "2026-05-01T11-00-00", "mmlu", _sample_metrics(), scorer="exact_match")
+
+    runs = load_runs(str(tmp_path), "mmlu")
+    assert len(runs) == 2

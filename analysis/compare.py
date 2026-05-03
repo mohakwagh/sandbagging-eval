@@ -44,18 +44,21 @@ def _parse_run_dir(run_dir: str) -> tuple[str, str]:
     return model_slug, timestamp
 
 
-def load_runs(results_dir: str, dataset: str) -> list[dict]:
+def load_runs(results_dir: str, dataset: str, scorer: str = None) -> list[dict]:
     """
     Scan results_dir for run subdirectories and return one entry per model
     (the latest run by timestamp) where the adapter matches dataset.
 
-    Runs without run_config.json are included with a warning — assumed to
-    belong to the requested dataset for backward compatibility with results
-    produced before run_config.json was introduced.
+    If scorer is specified, only runs with a matching scorer are included.
+    Runs without run_config.json are included with a warning (backward compat).
+
+    Raises SystemExit if scorer is not specified and mixed scorers are detected
+    across the collected runs — comparing runs with different scorers produces
+    misleading results and must be prevented.
 
     Returns a list of dicts: {"model": str, "metrics": dict}
     """
-    candidates: dict[str, dict] = {}  # model_slug → {timestamp, metrics, model}
+    candidates: dict[str, dict] = {}  # model_slug → {timestamp, metrics, model, scorer}
 
     for entry in os.listdir(results_dir):
         run_dir = os.path.join(results_dir, entry)
@@ -68,12 +71,16 @@ def load_runs(results_dir: str, dataset: str) -> list[dict]:
             continue
 
         config_path = os.path.join(run_dir, "run_config.json")
+        run_scorer = None
         if os.path.exists(config_path):
             with open(config_path) as f:
                 run_config = json.load(f)
             if run_config.get("adapter") != dataset:
                 continue
+            if scorer and run_config.get("scorer") != scorer:
+                continue
             model_name = run_config["model"]
+            run_scorer = run_config.get("scorer")
         else:
             # Backward compat: no run_config.json — assume it matches
             print(f"  [warn] {entry}: no run_config.json, assuming adapter='{dataset}'")
@@ -88,7 +95,21 @@ def load_runs(results_dir: str, dataset: str) -> list[dict]:
                 "timestamp": timestamp,
                 "model": model_name,
                 "metrics": metrics,
+                "scorer": run_scorer,
             }
+
+    # Detect mixed scorers and abort — comparing runs with different scorers
+    # produces misleading charts since scoring methods are not equivalent
+    if not scorer:
+        scorers_found = {v["scorer"] for v in candidates.values() if v["scorer"] is not None}
+        if len(scorers_found) > 1:
+            scorers_list = ", ".join(sorted(scorers_found))
+            print(f"\n[error] Mixed scorers found for dataset '{dataset}': {scorers_list}")
+            print("        Re-run with --scorer to restrict to one scorer:")
+            for s in sorted(scorers_found):
+                print(f"          python -m analysis.compare --results_dir {results_dir} "
+                      f"--dataset {dataset} --scorer {s} --open")
+            raise SystemExit(1)
 
     runs = [
         {"model": v["model"], "metrics": v["metrics"]}
@@ -225,11 +246,12 @@ def main():
     )
     parser.add_argument("--results_dir", default="results", help="Directory containing run subdirectories")
     parser.add_argument("--dataset", required=True, help="Adapter name to filter runs (e.g. mmlu)")
+    parser.add_argument("--scorer", default=None, help="Scorer to filter runs (e.g. exact_match). Required when multiple scorers exist for the dataset.")
     parser.add_argument("--open", action="store_true", help="Open the report in browser after generating")
     args = parser.parse_args()
 
     print(f"Scanning {args.results_dir}/ for '{args.dataset}' runs...")
-    runs = load_runs(args.results_dir, args.dataset)
+    runs = load_runs(args.results_dir, args.dataset, scorer=args.scorer)
 
     if not runs:
         print(f"No runs found for dataset '{args.dataset}'. Run the pipeline first.")

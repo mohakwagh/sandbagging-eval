@@ -63,12 +63,13 @@ def _save_results(records: list[dict], config, run_dir: str):
     with open(metrics_path, "w") as f:
         json.dump(metrics, f, indent=2)
 
-    # Run config — lets analysis.compare filter runs by adapter/dataset
+    # Run config — lets analysis.compare filter runs by adapter/dataset/scorer
     run_config_path = os.path.join(run_dir, "run_config.json")
     with open(run_config_path, "w") as f:
         json.dump({
             "model": config.model,
             "adapter": config.adapter,
+            "scorer": config.scorer,
             "seed": config.seed,
             "dataset_path": config.dataset_path,
         }, f, indent=2)
