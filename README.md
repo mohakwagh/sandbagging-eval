@@ -77,7 +77,7 @@ All non-secret parameters are set in `config.yaml`:
 | ---------------- | -------------------- | -------------------------------------------- |
 | `model`          | `openai/gpt-4o-mini` | Model identifier passed to Inspect AI        |
 | `adapter`        | `mmlu`               | Dataset adapter to use for the offline build |
-| `scorer`         | `exact_match`        | Scorer type: `exact_match` or `llm_judge`    |
+| `scorer`         | `exact_match`        | Scorer used to evaluate model responses      |
 | `n_per_category` | `50`                 | Questions sampled per task category          |
 | `seed`           | `42`                 | Random seed for reproducible sampling        |
 | `output_dir`     | `results`            | Directory for run outputs                    |
@@ -152,15 +152,29 @@ results/
 
 ### Cross-model comparison
 
-After running multiple models, generate a side-by-side comparison report filtered by dataset and scorer:
+After running multiple models, generate a side-by-side comparison report:
 
 ```bash
-python -m analysis.compare --results_dir results/ --dataset mmlu --scorer exact_match --open
+python -m analysis.compare --results_dir results/ --dataset mmlu [--scorer exact_match] [--open]
 ```
 
-Produces `results/comparison_mmlu_exact_match.html` — the scorer is included in the filename so comparisons for different scorers never overwrite each other. Only the latest run per model is included.
+| Argument | Required | Description |
+|---|---|---|
+| `--dataset` | Yes | Adapter name — filters to runs that used this dataset (e.g. `mmlu`) |
+| `--scorer` | Situational | Scorer name — required when runs for the dataset used different scorers (see below) |
+| `--results_dir` | No | Path to results directory (default: `results`) |
+| `--open` | No | Open the report in a browser after generating |
 
-If runs for the same dataset were produced with different scorers and `--scorer` is omitted, the command exits with an error listing the scorers found and the commands needed to compare each group separately.
+**Scorer behaviour:**
+
+| Situation | `--scorer` provided? | Outcome |
+|---|---|---|
+| All runs used the same scorer | No | Report generated — scorer inferred automatically for the filename |
+| All runs used the same scorer | Yes | Report generated — scorer taken from flag |
+| Runs used different scorers | No | **Error** — lists the scorers found and the exact commands to run each comparison separately |
+| Runs used different scorers | Yes | Report generated — only runs matching the specified scorer are included |
+
+Output is written to `results/comparison_{dataset}_{scorer}.html`. The scorer is included in the filename so comparisons for different scorers coexist without overwriting each other. Only the latest run per model is included.
 
 ## Project Structure
 
