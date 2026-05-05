@@ -2,9 +2,14 @@ from pydantic import BaseModel
 
 
 class ScorerInput(BaseModel):
-    """Input contract for all scorers: the model's raw response and the expected answer."""
+    """Input contract for all scorers: the model's raw response and the expected answer.
+
+    question is optional — deterministic scorers ignore it; LLM judge scorers use it
+    to provide context when assessing whether the response is correct.
+    """
     response: str
     expected: str
+    question: str = ""
 
 
 class ScorerOutput(BaseModel):

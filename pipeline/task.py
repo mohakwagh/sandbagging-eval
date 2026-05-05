@@ -11,12 +11,14 @@ from pipeline.config import PipelineConfig
 from pipeline.schema import ScorerInput
 from pipeline.scorers.base import BaseScorer
 from pipeline.scorers.exact_match import ExactMatchScorer
-from pipeline.scorers.llm_judge import LLMJudgeScorer
+from pipeline.scorers.llm_judge import BaseLLMJudgeScorer
+from pipeline.scorers.simple_rubric_judge import SimpleRubricJudge
 from pipeline.solver import build_solver
 
 SCORER_REGISTRY: dict[str, type[BaseScorer]] = {
     "exact_match": ExactMatchScorer,
-    "llm_judge": LLMJudgeScorer,
+    "llm_judge": SimpleRubricJudge,
+    "simple_rubric_judge": SimpleRubricJudge,
 }
 
 
@@ -32,7 +34,11 @@ def _make_inspect_scorer(custom_scorer: BaseScorer):
     def _scorer():
         async def score(state: TaskState, target: Target) -> Score:
             result = custom_scorer.score(
-                ScorerInput(response=state.output.completion, expected=target.text)
+                ScorerInput(
+                    response=state.output.completion,
+                    expected=target.text,
+                    question=state.metadata.get("question", ""),
+                )
             )
             return Score(value=result.score, answer=state.output.completion)
         return score
