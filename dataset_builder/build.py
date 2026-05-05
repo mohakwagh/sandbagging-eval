@@ -21,6 +21,8 @@ import os
 
 from dataset_builder.adapters.base import DatasetAdapter
 from dataset_builder.adapters.mmlu import MMLUAdapter
+from dataset_builder.adapters.truthfulqa import TruthfulQAAdapter
+from dataset_builder.adapters.wmdp import WMDPAdapter
 from dataset_builder.prompt_variants import generate_variants
 from pipeline.config import load_config
 
@@ -28,6 +30,8 @@ from pipeline.config import load_config
 # To add a new dataset source: implement DatasetAdapter and add one entry here.
 ADAPTER_REGISTRY: dict[str, type[DatasetAdapter]] = {
     "mmlu": MMLUAdapter,
+    "truthfulqa": TruthfulQAAdapter,
+    "wmdp": WMDPAdapter,
 }
 
 

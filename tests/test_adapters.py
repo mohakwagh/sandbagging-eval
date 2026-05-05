@@ -9,6 +9,8 @@ import pytest
 
 from dataset_builder.adapters.base import DatasetAdapter
 from dataset_builder.adapters.mmlu import MMLUAdapter, CATEGORY_SUBSETS
+from dataset_builder.adapters.truthfulqa import TruthfulQAAdapter, CATEGORY_SUBSETS as TRUTHFULQA_CATEGORY_SUBSETS
+from dataset_builder.adapters.wmdp import WMDPAdapter, CATEGORY_SUBSETS as WMDP_CATEGORY_SUBSETS
 from dataset_builder.prompt_variants import generate_variants, _TEMPLATES
 from dataset_builder.schema import DatasetItem, PromptInstance
 
@@ -163,3 +165,98 @@ def test_export_json_and_csv():
         with open(csv_path) as f:
             rows = list(csv.DictReader(f))
         assert len(rows) == len(instances)
+
+
+# ---------------------------------------------------------------------------
+# 6. WMDPAdapter tests
+# ---------------------------------------------------------------------------
+
+def test_wmdp_adapter_implements_interface():
+    assert issubclass(WMDPAdapter, DatasetAdapter)
+    adapter = WMDPAdapter()
+    assert callable(getattr(adapter, "load", None))
+
+
+def test_wmdp_sampling_reproducibility():
+    adapter = WMDPAdapter()
+    run_a = adapter.load(n_per_category=N_SMALL, seed=42)
+    run_b = adapter.load(n_per_category=N_SMALL, seed=42)
+    assert [item.question for item in run_a] == [item.question for item in run_b]
+
+
+def test_wmdp_different_seeds_produce_different_samples():
+    adapter = WMDPAdapter()
+    run_a = adapter.load(n_per_category=N_SMALL, seed=42)
+    run_b = adapter.load(n_per_category=N_SMALL, seed=99)
+    assert [item.question for item in run_a] != [item.question for item in run_b]
+
+
+def test_wmdp_items_conform_to_schema():
+    adapter = WMDPAdapter()
+    items = adapter.load(n_per_category=N_SMALL, seed=42)
+    assert len(items) == N_SMALL * len(WMDP_CATEGORY_SUBSETS)
+    for item in items:
+        assert isinstance(item, DatasetItem)
+        assert item.answer in {"A", "B", "C", "D"}
+        assert item.category in WMDP_CATEGORY_SUBSETS
+        assert item.source.startswith("wmdp:")
+        assert item.options is not None and len(item.options) == 4
+
+
+def test_wmdp_export_row_count():
+    adapter = WMDPAdapter()
+    items = adapter.load(n_per_category=N_SMALL, seed=42)
+    instances = []
+    for i, item in enumerate(items):
+        instances.extend(generate_variants(item, i))
+
+    expected = N_SMALL * len(WMDP_CATEGORY_SUBSETS) * 3  # 3 conditions
+    assert len(instances) == expected
+
+
+# ---------------------------------------------------------------------------
+# 7. TruthfulQAAdapter tests
+# ---------------------------------------------------------------------------
+
+def test_truthfulqa_adapter_implements_interface():
+    assert issubclass(TruthfulQAAdapter, DatasetAdapter)
+    adapter = TruthfulQAAdapter()
+    assert callable(getattr(adapter, "load", None))
+
+
+def test_truthfulqa_sampling_reproducibility():
+    adapter = TruthfulQAAdapter()
+    run_a = adapter.load(n_per_category=N_SMALL, seed=42)
+    run_b = adapter.load(n_per_category=N_SMALL, seed=42)
+    assert [item.question for item in run_a] == [item.question for item in run_b]
+
+
+def test_truthfulqa_different_seeds_produce_different_samples():
+    adapter = TruthfulQAAdapter()
+    run_a = adapter.load(n_per_category=N_SMALL, seed=42)
+    run_b = adapter.load(n_per_category=N_SMALL, seed=99)
+    assert [item.question for item in run_a] != [item.question for item in run_b]
+
+
+def test_truthfulqa_items_conform_to_schema():
+    adapter = TruthfulQAAdapter()
+    items = adapter.load(n_per_category=N_SMALL, seed=42)
+    assert len(items) == N_SMALL * len(TRUTHFULQA_CATEGORY_SUBSETS)
+    for item in items:
+        assert isinstance(item, DatasetItem)
+        assert item.category in TRUTHFULQA_CATEGORY_SUBSETS
+        assert item.source.startswith("truthfulqa:")
+        assert item.options is None          # open-ended, no MCQ options
+        assert item.answer_format is None    # free-form response expected
+        assert len(item.answer) > 0          # best_answer is non-empty
+
+
+def test_truthfulqa_export_row_count():
+    adapter = TruthfulQAAdapter()
+    items = adapter.load(n_per_category=N_SMALL, seed=42)
+    instances = []
+    for i, item in enumerate(items):
+        instances.extend(generate_variants(item, i))
+
+    expected = N_SMALL * len(TRUTHFULQA_CATEGORY_SUBSETS) * 3  # 3 conditions
+    assert len(instances) == expected
