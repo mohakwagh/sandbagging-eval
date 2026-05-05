@@ -12,7 +12,7 @@ class PipelineConfig(BaseModel):
     """
     model: str
     dataset_path: str
-    scorer: Literal["exact_match", "llm_judge"]
+    scorer: str
     adapter: str = "mmlu"
     output_dir: str
     seed: int

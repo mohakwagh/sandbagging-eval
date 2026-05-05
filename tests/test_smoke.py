@@ -7,7 +7,7 @@ def test_imports():
     from pipeline.config import PipelineConfig, load_config
     from pipeline.scorers.base import BaseScorer
     from pipeline.scorers.exact_match import ExactMatchScorer
-    from pipeline.scorers.llm_judge import LLMJudgeScorer
+    from pipeline.scorers.llm_judge import BaseLLMJudgeScorer
     from dataset_builder.adapters.base import DatasetAdapter
     from dataset_builder.adapters.mmlu import MMLUAdapter
     from analysis.metrics import compute_metrics
@@ -30,16 +30,17 @@ def test_pipeline_config_valid():
     assert config.log_level == "info"
 
 
-def test_pipeline_config_invalid_scorer():
+def test_pipeline_config_accepts_any_scorer_string():
     from pipeline.config import PipelineConfig
-    with pytest.raises(ValidationError):
-        PipelineConfig(
-            model="openai/gpt-4o-mini",
-            dataset_path="data/dataset.json",
-            scorer="nonexistent_scorer",
-            output_dir="results",
-            seed=42,
-        )
+    # scorer is validated against SCORER_REGISTRY at build_task() time, not at config load
+    config = PipelineConfig(
+        model="openai/gpt-4o-mini",
+        dataset_path="data/dataset.json",
+        scorer="some_future_scorer",
+        output_dir="results",
+        seed=42,
+    )
+    assert config.scorer == "some_future_scorer"
 
 
 def test_pipeline_config_invalid_n_per_category():
@@ -101,6 +102,8 @@ def test_dotenv_loading(tmp_path, monkeypatch):
 def test_scorer_interface():
     from pipeline.scorers.base import BaseScorer
     from pipeline.scorers.exact_match import ExactMatchScorer
-    from pipeline.scorers.llm_judge import LLMJudgeScorer
+    from pipeline.scorers.llm_judge import BaseLLMJudgeScorer
+    from pipeline.scorers.simple_rubric_judge import SimpleRubricJudge
     assert issubclass(ExactMatchScorer, BaseScorer)
-    assert issubclass(LLMJudgeScorer, BaseScorer)
+    assert issubclass(BaseLLMJudgeScorer, BaseScorer)
+    assert issubclass(SimpleRubricJudge, BaseLLMJudgeScorer)
