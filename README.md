@@ -204,7 +204,9 @@ sandbagging-eval/
 ├── dataset_builder/                # offline preprocessing
 │   ├── adapters/
 │   │   ├── base.py                 # DatasetAdapter interface
-│   │   └── mmlu.py                 # MMLU implementation (+ other adapters)
+│   │   ├── mmlu.py                 # MMLU implementation
+│   │   ├── wmdp.py                 # WMDP implementation
+│   │   └── truthfulqa.py           # TruthfulQA implementation
 │   ├── schema.py                   # DatasetItem, PromptInstance
 │   ├── prompt_variants.py          # neutral/subtle/explicit template generator
 │   └── build.py                    # entry point: python -m dataset_builder.build
@@ -223,7 +225,7 @@ sandbagging-eval/
 │   ├── metrics.py                  # sandbagging rate computation
 │   ├── visualization.py            # per-run Plotly HTML report
 │   └── compare.py                  # cross-model comparison report
-├── tests/                          # 69 pytest tests across all modules
+├── tests/                          # 86 pytest tests across all modules
 └── docs/
     ├── SPEC.md
     ├── ARCHITECTURE.md
@@ -266,7 +268,7 @@ _Screenshot of `comparison_mmlu_exact_match.html` — overall accuracy by model 
 
 - **[Inspect AI](https://inspect.aisi.org.uk/)** — evaluation harness, model execution, native logging
 - **OpenAI API** — model inference (default: GPT-4o Mini)
-- **HuggingFace `datasets`** — MMLU dataset sourcing
+- **HuggingFace `datasets`** — dataset sourcing (MMLU, WMDP, TruthfulQA)
 - **Pydantic** — config and schema validation with fast-fail on invalid parameters
 - **Pandas** — results aggregation and metric computation
 - **Plotly** — interactive HTML report generation
