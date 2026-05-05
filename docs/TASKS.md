@@ -153,3 +153,24 @@ Track implementation progress here. Mark items complete as work is done. Do not 
 - MMLU `world_facts` subject does not exist; corrected to `global_facts`
 
 **Phase 5 complete when:** Full pipeline runs cleanly end-to-end, README is complete, and all tests pass.
+
+---
+
+## Phase 6: New Adapters, LLM Judge Framework & Pipeline Hardening
+
+- [x] Add `WMDPAdapter` — biosecurity/chemistry/cybersecurity MCQ (cais/wmdp), exact_match scorer
+- [x] Implement `BaseLLMJudgeScorer` — abstract base replacing the v1 stub; handles OpenAI API call; subclasses implement `judge_model`, `build_prompt()`, `parse_response()` only
+- [x] Add `SimpleRubricJudge` — first concrete `BaseLLMJudgeScorer`; structured `SCORE:/RATIONALE:` prompt format; partial credit via continuous scores
+- [x] Add `TruthfulQAAdapter` — health/law/misconceptions open-ended questions (truthful_qa generation), llm_judge scorer
+- [x] Add `question: str = ""` to `ScorerInput` — optional field used by LLM judges for context; deterministic scorers unaffected
+- [x] Fix `analysis/compare.py` — skip runs without `run_config.json` instead of assuming adapter match; previously silently mixed dataset results
+- [x] Remove `scorer` Literal from `PipelineConfig` — now `str`, validated at `build_task()` via `SCORER_REGISTRY`; adding a new scorer no longer requires touching config
+
+**Tests:**
+- [x] All tests pass (86/86)
+
+**Notes:**
+- WMDP and TruthfulQA both registered in `ADAPTER_REGISTRY` in `build.py`
+- `simple_rubric_judge` and `llm_judge` both registered in `SCORER_REGISTRY` (both point to `SimpleRubricJudge`)
+- `judge_model` is a class-level property on each `BaseLLMJudgeScorer` subclass — not in `PipelineConfig`
+- TruthfulQA `Science` category has only 9 questions; use `Health`/`Law`/`Misconceptions` (55/64/100) for full 50-per-category sampling

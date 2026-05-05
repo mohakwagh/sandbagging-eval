@@ -28,7 +28,7 @@ Prompt Variant Generator           Dataset → Inspect Task
       ▼                            Model Execution (via Inspect AI)
 Standardized Dataset                     │
   (data/dataset.json)                    ▼
-                                   Scorer (ExactMatch / LLMJudge)
+                                   Scorer (ExactMatch / LLMJudge / custom)
                                          │
                                          ▼
                                    Results + Plotly Report
@@ -135,6 +135,23 @@ API keys are loaded from `.env` via `python-dotenv` and are never stored in conf
 
 Scores can be binary (`0.0`/`1.0`) or continuous (`0.0`–`1.0`) — the pipeline handles both.
 
+**For LLM-as-judge scorers**, extend `BaseLLMJudgeScorer` instead of `BaseScorer` — it handles the OpenAI API call for you. Implement three members only:
+
+```python
+from pipeline.scorers.llm_judge import BaseLLMJudgeScorer
+
+class YourJudge(BaseLLMJudgeScorer):
+    judge_model = "gpt-4o-mini"   # which model to use as judge
+
+    def build_prompt(self, input) -> str:
+        ...  # compose the judge prompt from input.question, input.expected, input.response
+
+    def parse_response(self, response: str) -> float:
+        ...  # extract a score in [0.0, 1.0] from the judge's reply
+```
+
+Then register and configure the same way as any other scorer.
+
 ## Output
 
 Each run writes to `results/{model}_{timestamp}/`:
@@ -158,21 +175,21 @@ After running multiple models, generate a side-by-side comparison report:
 python -m analysis.compare --results_dir results/ --dataset mmlu [--scorer exact_match] [--open]
 ```
 
-| Argument | Required | Description |
-|---|---|---|
-| `--dataset` | Yes | Adapter name — filters to runs that used this dataset (e.g. `mmlu`) |
-| `--scorer` | Situational | Scorer name — required when runs for the dataset used different scorers (see below) |
-| `--results_dir` | No | Path to results directory (default: `results`) |
-| `--open` | No | Open the report in a browser after generating |
+| Argument        | Required    | Description                                                                         |
+| --------------- | ----------- | ----------------------------------------------------------------------------------- |
+| `--dataset`     | Yes         | Adapter name — filters to runs that used this dataset (e.g. `mmlu`)                 |
+| `--scorer`      | Situational | Scorer name — required when runs for the dataset used different scorers (see below) |
+| `--results_dir` | No          | Path to results directory (default: `results`)                                      |
+| `--open`        | No          | Open the report in a browser after generating                                       |
 
 **Scorer behaviour:**
 
-| Situation | `--scorer` provided? | Outcome |
-|---|---|---|
-| All runs used the same scorer | No | Report generated — scorer inferred automatically for the filename |
-| All runs used the same scorer | Yes | Report generated — scorer taken from flag |
-| Runs used different scorers | No | **Error** — lists the scorers found and the exact commands to run each comparison separately |
-| Runs used different scorers | Yes | Report generated — only runs matching the specified scorer are included |
+| Situation                     | `--scorer` provided? | Outcome                                                                                      |
+| ----------------------------- | -------------------- | -------------------------------------------------------------------------------------------- |
+| All runs used the same scorer | No                   | Report generated — scorer inferred automatically for the filename                            |
+| All runs used the same scorer | Yes                  | Report generated — scorer taken from flag                                                    |
+| Runs used different scorers   | No                   | **Error** — lists the scorers found and the exact commands to run each comparison separately |
+| Runs used different scorers   | Yes                  | Report generated — only runs matching the specified scorer are included                      |
 
 Output is written to `results/comparison_{dataset}_{scorer}.html`. The scorer is included in the filename so comparisons for different scorers coexist without overwriting each other. Only the latest run per model is included.
 
@@ -187,7 +204,7 @@ sandbagging-eval/
 ├── dataset_builder/                # offline preprocessing
 │   ├── adapters/
 │   │   ├── base.py                 # DatasetAdapter interface
-│   │   └── mmlu.py                 # MMLU implementation
+│   │   └── mmlu.py                 # MMLU implementation (+ other adapters)
 │   ├── schema.py                   # DatasetItem, PromptInstance
 │   ├── prompt_variants.py          # neutral/subtle/explicit template generator
 │   └── build.py                    # entry point: python -m dataset_builder.build
@@ -199,7 +216,8 @@ sandbagging-eval/
 │   ├── scorers/
 │   │   ├── base.py                 # BaseScorer interface
 │   │   ├── exact_match.py          # ExactMatchScorer
-│   │   └── llm_judge.py            # LLMJudgeScorer interface (v1 stub)
+│   │   ├── llm_judge.py            # BaseLLMJudgeScorer (abstract base for LLM judges)
+│   │   └── simple_rubric_judge.py  # SimpleRubricJudge (example implementation)
 │   └── run.py                      # entry point: python -m pipeline.run
 ├── analysis/
 │   ├── metrics.py                  # sandbagging rate computation
@@ -214,7 +232,7 @@ sandbagging-eval/
 
 ## Example Findings
 
-Results (model accuracy and sandbagging rate) from running the pipeline across five OpenAI models on 150 MMLU questions (50 per category) under three prompt conditions:
+Results (model accuracy and sandbagging rate) from running the pipeline across five OpenAI models on 150 MMLU questions (50 per category) under three prompt conditions with exact match eval:
 
 | Model             | Neutral | Subtle | Explicit | Subtle Rate | Explicit Rate |
 | ----------------- | ------- | ------ | -------- | ----------- | ------------- |
@@ -252,6 +270,6 @@ _Screenshot of `comparison_mmlu_exact_match.html` — overall accuracy by model 
 - **Pydantic** — config and schema validation with fast-fail on invalid parameters
 - **Pandas** — results aggregation and metric computation
 - **Plotly** — interactive HTML report generation
-- **pytest** — test suite (69 tests)
+- **pytest** — test suite (86 tests)
 - **python-dotenv** — secrets management
 - **Docker** — containerized execution

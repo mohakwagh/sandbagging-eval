@@ -154,12 +154,11 @@ class PromptInstance(BaseModel):
 
 ```python
 from pydantic import BaseModel
-from typing import Literal
 
 class PipelineConfig(BaseModel):
     model: str                          # e.g. "openai/gpt-4o-mini"
     dataset_path: str                   # path to preprocessed dataset JSON/CSV
-    scorer: Literal["exact_match", "llm_judge"]
+    scorer: str                         # validated against SCORER_REGISTRY at build_task() time
     adapter: str = "mmlu"               # dataset adapter name, must be in ADAPTER_REGISTRY
     output_dir: str
     seed: int
@@ -199,9 +198,21 @@ The Inspect bridge in `pipeline/task.py` wraps any `BaseScorer` via `_make_inspe
 
 ---
 
-### `pipeline/scorers/llm_judge.py` — LLMJudgeScorer Interface
+### `pipeline/scorers/llm_judge.py` — BaseLLMJudgeScorer
 
-Defines the interface for LLM-as-judge scoring. Not fully implemented in v1 — interface and docstring defined for open-ended task extensions. Uses `answer` field as reference rubric.
+Abstract base for all LLM-as-judge scorers. Handles the OpenAI API call so subclasses only implement three members:
+
+- `judge_model: str` — abstract property declaring which model to call (self-contained, not in config)
+- `build_prompt(input: ScorerInput) -> str` — compose the judge prompt from question, expected, and response
+- `parse_response(response: str) -> float` — extract a score in [0.0, 1.0] from the judge's reply
+
+`score()` is fully implemented in the base: calls `build_prompt()`, sends to the judge model, calls `parse_response()`, and stores the judge's raw reply in `ScorerOutput.rationale`.
+
+---
+
+### `pipeline/scorers/simple_rubric_judge.py` — SimpleRubricJudge
+
+First concrete `BaseLLMJudgeScorer` implementation. Sends a structured rubric prompt asking the judge to reply as `SCORE: <float>\nRATIONALE: <text>`, then extracts the score via regex with clamping to [0.0, 1.0]. Supports partial credit for partially correct answers. Serves as the reference implementation for new LLM judge scorers.
 
 ---
 
@@ -273,7 +284,8 @@ results/
 | What to extend | What to implement | Where |
 |---|---|---|
 | New dataset source | `DatasetAdapter` subclass + `ADAPTER_REGISTRY` entry | `dataset_builder/adapters/` + `build.py` |
-| New scorer | `BaseScorer` subclass + `SCORER_REGISTRY` entry | `pipeline/scorers/` + `pipeline/task.py` |
+| New scorer (deterministic) | `BaseScorer` subclass + `SCORER_REGISTRY` entry | `pipeline/scorers/` + `pipeline/task.py` |
+| New LLM judge scorer | `BaseLLMJudgeScorer` subclass + `SCORER_REGISTRY` entry | `pipeline/scorers/` + `pipeline/task.py` |
 | New model | Update `config.yaml` only | `config.yaml` |
 | New task category | New adapter + config entry | `dataset_builder/adapters/` + `config.yaml` |
 | Cross-model comparison | Run `analysis.compare` with `--dataset` flag | `analysis/compare.py` |

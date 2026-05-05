@@ -70,7 +70,7 @@ Build a pluggable sandbagging detection pipeline using Inspect AI that measures 
 - [x] Adding a new task category requires no changes outside of dataset and config
 - [x] Adding a new dataset source requires only a new adapter implementation
 - [x] Adding a new scorer requires only a new scorer implementation
-- [x] Scorer type is configurable — ExactMatchScorer used by default, LLMJudgeScorer interface available for open-ended task extensions
+- [x] Scorer type is configurable — ExactMatchScorer used by default, BaseLLMJudgeScorer framework implemented for open-ended task extensions
 
 ---
 
@@ -122,7 +122,7 @@ Pipeline loads the preprocessed dataset via a dataset adapter. Adapter interface
 Each prompt condition is defined as an Inspect `Task` with:
 - A `Dataset` of prompt instances
 - A `Solver` that sends prompts to the configured model
-- A `Scorer` injected via config — `ExactMatchScorer` by default, `LLMJudgeScorer` available for open-ended extensions
+- A `Scorer` injected via config — `ExactMatchScorer` by default, `BaseLLMJudgeScorer` subclasses available for open-ended extensions
 
 #### Stage 6: Model Execution
 Inspect handles model API calls, retries, and logging. GPT-4o Mini is the default model. All raw responses and scores logged via Inspect's native logging infrastructure.
