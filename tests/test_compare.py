@@ -80,18 +80,18 @@ def test_load_runs_handles_multiple_models(tmp_path):
 
 
 # ---------------------------------------------------------------------------
-# load_runs: backward compat (no run_config.json)
+# load_runs: runs without run_config.json are skipped
 # ---------------------------------------------------------------------------
 
-def test_load_runs_includes_dirs_without_run_config(tmp_path, capsys):
+def test_load_runs_skips_dirs_without_run_config(tmp_path, capsys):
     run_dir = tmp_path / "openai_gpt-a_2026-05-01T10-00-00"
     run_dir.mkdir()
     (run_dir / "aggregated_metrics.json").write_text(json.dumps(_sample_metrics()))
 
     runs = load_runs(str(tmp_path), "mmlu")
-    assert len(runs) == 1
+    assert len(runs) == 0
     captured = capsys.readouterr()
-    assert "warn" in captured.out
+    assert "skip" in captured.out
 
 
 # ---------------------------------------------------------------------------

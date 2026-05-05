@@ -7,8 +7,8 @@ comparison of accuracy and sandbagging rates:
     python -m analysis.compare --results_dir results/ --dataset mmlu --open
 
 Only runs that used the specified adapter (dataset) are included. For each model,
-the most recent run is used. Runs without a run_config.json (produced by older
-pipeline versions) are included with a warning.
+the most recent run is used. Runs without a run_config.json are skipped — adapter
+cannot be verified so they are excluded to prevent mixing datasets.
 
 Output: results/comparison_{dataset}.html
 """
@@ -50,7 +50,7 @@ def load_runs(results_dir: str, dataset: str, scorer: str = None) -> list[dict]:
     (the latest run by timestamp) where the adapter matches dataset.
 
     If scorer is specified, only runs with a matching scorer are included.
-    Runs without run_config.json are included with a warning (backward compat).
+    Runs without run_config.json are skipped — adapter cannot be verified.
 
     Raises SystemExit if scorer is not specified and mixed scorers are detected
     across the collected runs — comparing runs with different scorers produces
@@ -82,9 +82,9 @@ def load_runs(results_dir: str, dataset: str, scorer: str = None) -> list[dict]:
             model_name = run_config["model"]
             run_scorer = run_config.get("scorer")
         else:
-            # Backward compat: no run_config.json — assume it matches
-            print(f"  [warn] {entry}: no run_config.json, assuming adapter='{dataset}'")
-            model_name = model_slug.replace("openai_", "openai/", 1)
+            # No run_config.json — skip rather than assume adapter matches
+            print(f"  [skip] {entry}: no run_config.json, cannot verify adapter")
+            continue
 
         with open(metrics_path) as f:
             metrics = json.load(f)
