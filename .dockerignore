@@ -1,0 +1,11 @@
+.git/
+.env
+.DS_Store
+results/
+data/
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+*.egg-info/
